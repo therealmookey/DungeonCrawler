@@ -1,18 +1,20 @@
 /**
- * Dungeon Cartographer - App Controller with Features
+ * Dungeon Cartographer - App Controller
+ * Full map view with bottom controls and hybrid features
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const mapGenerator = new DungeonMapGenerator();
     let currentMap = new Map();
 
+    // DOM Elements
     const elements = {
         rollD20Btn: document.getElementById('rollD20Btn'),
         rollD4Btn: document.getElementById('rollD4Btn'),
+        balanceBtn: document.getElementById('balanceBtn'),
         resetBtn: document.getElementById('resetBtn'),
         undoBtn: document.getElementById('undoBtn'),
         printBtn: document.getElementById('printBtn'),
-        balanceBtn: document.getElementById('balanceBtn'),
         d20Display: document.getElementById('d20Display'),
         d4Display: document.getElementById('d4Display'),
         chargesDisplay: document.getElementById('chargesDisplay'),
@@ -43,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         elements.chargesDisplay.textContent = chargesRemaining;
 
-        // Update feature stats
         updateFeatureStats();
 
         if (chargesRemaining > 0) {
@@ -103,11 +104,278 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (totalFeatures === 0) {
             html = '<span style="color: #666;">No features yet</span>';
+        } else {
+            html = `<span style="color: #888; margin-right: 8px;">🎯 Features:</span> ${html}`;
         }
         
         statDiv.innerHTML = html;
     }
 
-    // ... (rest of the app.js is the same as before)
-    // Include all the render functions, event listeners, etc.
+    function renderGrid() {
+        const grid = elements.grid;
+        if (currentMap.size === 0) {
+            grid.innerHTML = '<div style="padding: 50px; color: #666;">Roll D20 to start building!</div>';
+            return;
+        }
+
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        for (const [key, room] of currentMap) {
+            minX = Math.min(minX, room.x);
+            maxX = Math.max(maxX, room.x);
+            minY = Math.min(minY, room.y);
+            maxY = Math.max(maxY, room.y);
+        }
+
+        const padding = 2;
+        minX -= padding;
+        maxX += padding;
+        minY -= padding;
+        maxY += padding;
+
+        const width = maxX - minX + 1;
+        const containerWidth = elements.grid.parentElement.clientWidth - 40;
+        const cellSize = Math.min(65, Math.floor((containerWidth / width) - 2));
+
+        grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
+        grid.innerHTML = '';
+
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                const key = `${x},${y}`;
+                const room = currentMap.get(key);
+                const isCurrent = mapGenerator.currentPos.x === x && mapGenerator.currentPos.y === y;
+
+                if (room) {
+                    cell.classList.add('cell-room');
+                    
+                    if (room.type === 'start') {
+                        cell.classList.add('cell-start');
+                    }
+                    
+                    if (room.color) {
+                        cell.classList.add(room.color);
+                    }
+                    
+                    if (isCurrent) {
+                        cell.classList.add('cell-current');
+                    }
+
+                    const iconSpan = document.createElement('span');
+                    iconSpan.className = 'icon';
+                    iconSpan.textContent = room.icon || '⬜';
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.className = 'label';
+                    labelSpan.textContent = room.label || '';
+
+                    cell.appendChild(iconSpan);
+                    cell.appendChild(labelSpan);
+                    
+                    let tooltip = `Room ${room.id}`;
+                    if (room.type === 'start') {
+                        tooltip = '⭐ START - The beginning of your dungeon';
+                    }
+                    if (room.featureType) {
+                        tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
+                    }
+                    cell.title = tooltip;
+                } else {
+                    cell.classList.add('cell-wall');
+                }
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    function renderLog() {
+        const logDiv = elements.log;
+        if (logDiv.children.length === 0) {
+            logDiv.innerHTML = '<div class="log-entry info">🎲 Roll D20 to start!</div>';
+        }
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function addLogEntry(message, className = 'info') {
+        const logDiv = elements.log;
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${className}`;
+        entry.textContent = message;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        
+        while (logDiv.children.length > 25) {
+            logDiv.removeChild(logDiv.firstChild);
+        }
+    }
+
+    function handleD20Roll() {
+        const result = mapGenerator.rollForCharges();
+        currentD20Roll = result.finalRoll;
+        chargesRemaining = result.charges;
+        currentMap = new Map(mapGenerator.rooms);
+        
+        addLogEntry(`🎲 D20: ${result.rolls.join(', ')} → ${result.charges} charges!`, 'd20-roll');
+        addLogEntry(`⭐ START room at (0, 0) - The beginning!`, 'start');
+        
+        elements.d20Display.textContent = result.finalRoll;
+        updateUI();
+    }
+
+    function handleD4Roll() {
+        if (chargesRemaining <= 0) {
+            addLogEntry('⚠️ No charges! Roll D20 again.', 'danger');
+            return;
+        }
+
+        const d4 = mapGenerator.rollDice(4);
+        currentD4Roll = d4;
+        
+        const result = mapGenerator.placeRoom(d4);
+        
+        if (result.success) {
+            currentMap = new Map(mapGenerator.rooms);
+            chargesRemaining = result.chargesLeft;
+            
+            const dir = mapGenerator.getDirection(d4);
+            
+            if (result.feature) {
+                addLogEntry(`🎲 D4 = ${d4} (${dir.emoji}) → ${result.message}`, 'feature');
+            } else if (result.isMove) {
+                addLogEntry(`🎲 D4 = ${d4} (${dir.emoji}) → ${result.message}`, 'place');
+            } else {
+                addLogEntry(`🎲 D4 = ${d4} (${dir.emoji}) → ${result.message}`, 'd4-roll');
+            }
+            
+            elements.direction.textContent = `${dir.emoji} ${dir.name}`;
+            elements.d4Display.textContent = d4;
+            
+            if (chargesRemaining === 0) {
+                addLogEntry('🏁 No more charges! Roll D20 again.', 'info');
+            }
+        } else {
+            addLogEntry(`❌ ${result.message}`, 'danger');
+        }
+        
+        updateUI();
+    }
+
+    function handleBalance() {
+        if (currentMap.size < 4) {
+            addLogEntry('⚠️ Need at least 3 rooms to balance (excluding start)', 'danger');
+            return;
+        }
+
+        const result = mapGenerator.balanceDungeon();
+        if (result.success) {
+            currentMap = new Map(mapGenerator.rooms);
+            addLogEntry(`⚖️ ${result.message}`, 'balance');
+            if (result.addedFeatures && result.addedFeatures.length > 0) {
+                result.addedFeatures.forEach(f => {
+                    addLogEntry(`   ➕ Added ${f.label} to room ${f.key}`, 'feature');
+                });
+            }
+            updateUI();
+        } else {
+            addLogEntry(`⚠️ ${result.message}`, 'danger');
+        }
+    }
+
+    function handleUndo() {
+        const result = mapGenerator.undo();
+        if (result.success) {
+            currentMap = new Map(mapGenerator.rooms);
+            chargesRemaining = mapGenerator.charges;
+            addLogEntry(`↩️ ${result.message}`, 'info');
+            updateUI();
+        } else {
+            addLogEntry(`❌ ${result.message}`, 'danger');
+        }
+    }
+
+    function handleReset() {
+        if (currentMap.size > 1) {
+            if (confirm('Reset the dungeon?')) {
+                mapGenerator.reset();
+                currentMap = new Map(mapGenerator.rooms);
+                currentD20Roll = null;
+                currentD4Roll = null;
+                chargesRemaining = 0;
+                elements.direction.textContent = '-';
+                elements.d4Display.textContent = '-';
+                elements.d20Display.textContent = '-';
+                elements.featureStats.innerHTML = '<span style="color: #666;">No features yet</span>';
+                addLogEntry('🔄 Dungeon reset!', 'info');
+                addLogEntry('⭐ START room ready at (0, 0)', 'start');
+                updateUI();
+            }
+        } else {
+            mapGenerator.reset();
+            currentMap = new Map(mapGenerator.rooms);
+            currentD20Roll = null;
+            currentD4Roll = null;
+            chargesRemaining = 0;
+            elements.direction.textContent = '-';
+            elements.d4Display.textContent = '-';
+            elements.d20Display.textContent = '-';
+            elements.featureStats.innerHTML = '<span style="color: #666;">No features yet</span>';
+            addLogEntry('🔄 Dungeon reset!', 'info');
+            addLogEntry('⭐ START room ready at (0, 0)', 'start');
+            updateUI();
+        }
+    }
+
+    // Event Listeners
+    elements.rollD20Btn.addEventListener('click', handleD20Roll);
+    elements.rollD4Btn.addEventListener('click', handleD4Roll);
+    elements.balanceBtn.addEventListener('click', handleBalance);
+    elements.undoBtn.addEventListener('click', handleUndo);
+    elements.resetBtn.addEventListener('click', handleReset);
+    
+    elements.printBtn.addEventListener('click', () => {
+        window.print();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!elements.rollD4Btn.disabled) {
+                elements.rollD4Btn.click();
+            } else {
+                elements.rollD20Btn.click();
+            }
+        }
+        if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            elements.balanceBtn.click();
+        }
+        if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            elements.undoBtn.click();
+        }
+        if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+            elements.resetBtn.click();
+        }
+    });
+
+    // Initialization
+    addLogEntry('🎲 Welcome to the Dungeon Cartographer!', 'info');
+    addLogEntry('⭐ START room at (0, 0) - Always visible!', 'start');
+    addLogEntry('📖 Roll D20 → get charges → roll D4 → place rooms', 'info');
+    addLogEntry('🎯 Features appear randomly during placement!', 'info');
+    addLogEntry('⚖️ Press "Balance" or "B" to balance features', 'info');
+    addLogEntry('💡 Enter = Roll | Ctrl+Z = Undo | R = Reset', 'info');
+    
+    currentMap = new Map(mapGenerator.rooms);
+    updateUI();
+
+    // Handle resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(renderGrid, 200);
+    });
 });

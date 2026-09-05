@@ -103,7 +103,7 @@ header h1 {
 }
 
 /* ============================================
-   START ROOM - CLEAR INDICATOR
+   START ROOM
    ============================================ */
 .cell-start {
     background: #1a4a1a;
@@ -123,7 +123,6 @@ header h1 {
     text-shadow: 0 0 10px rgba(74, 138, 42, 0.5);
 }
 
-/* Start room glow ring */
 .cell-start::before {
     content: '';
     position: absolute;
@@ -170,13 +169,80 @@ header h1 {
     z-index: 1;
 }
 
-.cell-current .icon {
-    animation: bounce-current 1s ease-in-out infinite;
+/* ============================================
+   FEATURE ROOM COLORS
+   ============================================ */
+.cell-room.has-treasure {
+    background: #1a3a1a;
+    border-color: #2a8a2a;
+    animation: pulse-gold 2s infinite;
 }
 
-@keyframes bounce-current {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+.cell-room.has-trap {
+    background: #3a1a1a;
+    border-color: #8a2a2a;
+    animation: pulse-red 2s infinite;
+}
+
+.cell-room.has-monster {
+    background: #2a1a3a;
+    border-color: #6a2a8a;
+    animation: pulse-purple 2s infinite;
+}
+
+.cell-room.has-puzzle {
+    background: #1a2a3a;
+    border-color: #2a6a8a;
+    animation: pulse-blue 2s infinite;
+}
+
+.cell-room.has-shop {
+    background: #1a3a3a;
+    border-color: #2a8a8a;
+    animation: pulse-cyan 2s infinite;
+}
+
+.cell-room.has-boss {
+    background: #3a1a2a;
+    border-color: #8a2a6a;
+    animation: pulse-boss 2s infinite;
+}
+
+/* Feature animations */
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 5px rgba(212, 168, 67, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.5); }
+}
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); }
+}
+
+@keyframes pulse-purple {
+    0%, 100% { box-shadow: 0 0 5px rgba(128, 0, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(128, 0, 255, 0.5); }
+}
+
+@keyframes pulse-blue {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 100, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 100, 255, 0.5); }
+}
+
+@keyframes pulse-cyan {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 200, 200, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 200, 200, 0.5); }
+}
+
+@keyframes pulse-boss {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(200, 0, 150, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(200, 0, 150, 0.6);
+        transform: scale(1.05);
+    }
 }
 
 /* ============================================
@@ -189,10 +255,11 @@ header h1 {
 
 .cell .label {
     font-size: 0.45em;
-    opacity: 0.8;
+    opacity: 0.9;
     margin-top: 1px;
-    color: #aaa;
+    color: #ddd;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 /* ============================================
@@ -207,9 +274,10 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 280px;
+    max-height: 320px;
 }
 
+/* Dice Info */
 .dice-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -257,6 +325,23 @@ header h1 {
 
 .dice-status.done {
     color: #ff4444;
+}
+
+/* Feature Stats */
+.feature-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 4px 0;
+    font-size: 0.9em;
+}
+
+.feature-stat {
+    background: #0a0a0a;
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid #2a2a2a;
 }
 
 /* Controls */
@@ -344,6 +429,17 @@ header h1 {
     border-color: #aa8a3a;
 }
 
+.btn-info {
+    background: #1a3a5a;
+    color: #e0d6b0;
+    border-color: #2a5a7a;
+}
+
+.btn-info:hover:not(:disabled) {
+    background: #2a5a7a;
+    border-color: #3a7a9a;
+}
+
 /* Log */
 .log-container {
     background: #0a0a0a;
@@ -403,6 +499,14 @@ header h1 {
     font-weight: bold;
 }
 
+.log-entry.feature {
+    color: #ff88ff;
+}
+
+.log-entry.balance {
+    color: #88ddff;
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
@@ -438,7 +542,7 @@ header h1 {
 
     #bottom-panel {
         padding: 8px 10px;
-        max-height: 240px;
+        max-height: 280px;
     }
 
     .dice-info {
@@ -457,6 +561,11 @@ header h1 {
     }
 
     .controls {
+        gap: 5px;
+    }
+
+    .feature-stats {
+        font-size: 0.75em;
         gap: 5px;
     }
 }
@@ -507,12 +616,17 @@ header h1 {
     }
 
     #bottom-panel {
-        max-height: 200px;
+        max-height: 250px;
         padding: 5px 8px;
     }
 
     .log-container {
         max-height: 40px;
+    }
+
+    .feature-stats {
+        font-size: 0.65em;
+        gap: 3px;
     }
 }
 
@@ -598,89 +712,40 @@ header h1 {
         color: #222;
         font-size: 0.4em;
     }
-}
-/* ============================================
-   FEATURE ROOM COLORS
-   ============================================ */
-.cell-room.has-treasure {
-    background: #1a3a1a;
-    border-color: #2a8a2a;
-    animation: pulse-gold 2s infinite;
-}
 
-.cell-room.has-trap {
-    background: #3a1a1a;
-    border-color: #8a2a2a;
-    animation: pulse-red 2s infinite;
-}
-
-.cell-room.has-monster {
-    background: #2a1a3a;
-    border-color: #6a2a8a;
-    animation: pulse-purple 2s infinite;
-}
-
-.cell-room.has-puzzle {
-    background: #1a2a3a;
-    border-color: #2a6a8a;
-    animation: pulse-blue 2s infinite;
-}
-
-.cell-room.has-shop {
-    background: #1a3a3a;
-    border-color: #2a8a8a;
-    animation: pulse-cyan 2s infinite;
-}
-
-.cell-room.has-boss {
-    background: #3a1a2a;
-    border-color: #8a2a6a;
-    animation: pulse-boss 2s infinite;
-}
-
-/* Feature animations */
-@keyframes pulse-gold {
-    0%, 100% { box-shadow: 0 0 5px rgba(212, 168, 67, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.5); }
-}
-
-@keyframes pulse-red {
-    0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); }
-}
-
-@keyframes pulse-purple {
-    0%, 100% { box-shadow: 0 0 5px rgba(128, 0, 255, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(128, 0, 255, 0.5); }
-}
-
-@keyframes pulse-blue {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 100, 255, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 100, 255, 0.5); }
-}
-
-@keyframes pulse-cyan {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 200, 200, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 200, 200, 0.5); }
-}
-
-@keyframes pulse-boss {
-    0%, 100% { 
-        box-shadow: 0 0 10px rgba(200, 0, 150, 0.3);
-        transform: scale(1);
+    .cell-room.has-treasure {
+        background: #ccffcc !important;
+        border-color: #00cc00 !important;
+        animation: none !important;
     }
-    50% { 
-        box-shadow: 0 0 30px rgba(200, 0, 150, 0.6);
-        transform: scale(1.05);
-    }
-}
-.btn-info {
-    background: #1a3a5a;
-    color: #e0d6b0;
-    border-color: #2a5a7a;
-}
 
-.btn-info:hover:not(:disabled) {
-    background: #2a5a7a;
-    border-color: #3a7a9a;
+    .cell-room.has-trap {
+        background: #ffcccc !important;
+        border-color: #cc0000 !important;
+        animation: none !important;
+    }
+
+    .cell-room.has-monster {
+        background: #e6cce6 !important;
+        border-color: #990099 !important;
+        animation: none !important;
+    }
+
+    .cell-room.has-puzzle {
+        background: #cce0ff !important;
+        border-color: #0066cc !important;
+        animation: none !important;
+    }
+
+    .cell-room.has-shop {
+        background: #ccffff !important;
+        border-color: #008888 !important;
+        animation: none !important;
+    }
+
+    .cell-room.has-boss {
+        background: #ffccdd !important;
+        border-color: #cc0066 !important;
+        animation: none !important;
+    }
 }

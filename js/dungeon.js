@@ -1,13 +1,11 @@
 /**
- * Dungeon Cartographer - With Special Features
- * Hybrid system: Dice during placement + balancing pass
+ * Dungeon Cartographer - Hybrid System
+ * Dice during placement + balancing pass
  */
 
 class DungeonMapGenerator {
     constructor() {
-        this.reset();
         this.featureConfig = {
-            // Chance during placement (D20 roll ranges)
             placementChances: {
                 treasure: { min: 2, max: 4, icon: '💰', label: 'TREASURE' },
                 trap: { min: 5, max: 7, icon: '⚠️', label: 'TRAP' },
@@ -16,7 +14,6 @@ class DungeonMapGenerator {
                 shop: { min: 14, max: 15, icon: '🏪', label: 'SHOP' },
                 boss: { min: 16, max: 17, icon: '👑', label: 'BOSS' }
             },
-            // Final balancing percentages
             balancing: {
                 treasure: 20,
                 trap: 15,
@@ -26,6 +23,7 @@ class DungeonMapGenerator {
                 boss: 5
             }
         };
+        this.reset();
     }
 
     reset() {
@@ -89,7 +87,6 @@ class DungeonMapGenerator {
         };
     }
 
-    // Check for feature during placement
     checkForFeature() {
         const roll = this.rollDice(20);
         const config = this.featureConfig.placementChances;
@@ -124,7 +121,8 @@ class DungeonMapGenerator {
                 success: true, 
                 message: `Moved to existing room (${dir.emoji} ${dir.name})`,
                 room: this.rooms.get(key),
-                chargesLeft: this.charges
+                chargesLeft: this.charges,
+                isMove: true
             };
         }
 
@@ -134,6 +132,7 @@ class DungeonMapGenerator {
         
         // Check for feature
         const feature = this.checkForFeature();
+        let featureMessage = '';
         if (feature) {
             room.icon = feature.icon;
             room.label = feature.label;
@@ -141,6 +140,7 @@ class DungeonMapGenerator {
             room.color = `has-${feature.type}`;
             this.featureStats[feature.type] = (this.featureStats[feature.type] || 0) + 1;
             this.featuresApplied.push({ key, ...feature });
+            featureMessage = ` 🎯 ${feature.label}`;
         }
 
         this.currentPos = { x: newX, y: newY };
@@ -153,38 +153,34 @@ class DungeonMapGenerator {
             feature: feature
         });
 
-        const message = feature ? 
-            `Placed ${feature.label} (${dir.emoji} ${dir.name})` : 
-            `Placed room (${dir.emoji} ${dir.name})`;
+        const message = `Placed room (${dir.emoji} ${dir.name})${featureMessage}`;
 
         return {
             success: true,
             message: message,
             room: room,
             chargesLeft: this.charges,
-            feature: feature
+            feature: feature,
+            isMove: false
         };
     }
 
-    // Final balancing pass
     balanceDungeon() {
-        const totalRooms = this.rooms.size - 1; // Exclude start room
-        if (totalRooms < 3) return; // Too small to balance
+        const totalRooms = this.rooms.size - 1;
+        if (totalRooms < 3) {
+            return { 
+                success: false, 
+                message: 'Too few rooms to balance (need at least 3)' 
+            };
+        }
 
         const config = this.featureConfig.balancing;
         const targetCounts = {};
         let totalTarget = 0;
         
-        // Calculate target counts
         for (const [type, percentage] of Object.entries(config)) {
-            targetCounts[type] = Math.floor((percentage / 100) * totalRooms);
+            targetCounts[type] = Math.max(1, Math.floor((percentage / 100) * totalRooms));
             totalTarget += targetCounts[type];
-        }
-
-        // Get current features
-        const currentFeatures = {};
-        for (const [type] of Object.entries(config)) {
-            currentFeatures[type] = this.featureStats[type] || 0;
         }
 
         // Find rooms without features
@@ -195,35 +191,73 @@ class DungeonMapGenerator {
             }
         }
 
-        // Shuffle available rooms
+        // Also find rooms that could be converted (if we need more space)
+        const allNonStartRooms = [];
+        for (const [key, room] of this.rooms) {
+            if (room.type !== 'start') {
+                allNonStartRooms.push(key);
+            }
+        }
+
         const shuffled = this.shuffleArray(availableRooms);
         let index = 0;
-
-        // Add missing features
-        const featureTypes = Object.keys(config);
         let added = 0;
-        
-        for (const type of featureTypes) {
-            const needed = targetCounts[type] - currentFeatures[type];
-            if (needed > 0 && index < shuffled.length) {
-                const toAdd = Math.min(needed, shuffled.length - index);
-                for (let i = 0; i < toAdd && i < shuffled.length; i++) {
-                    const room = this.rooms.get(shuffled[index++]);
-                    if (room && room.type !== 'start') {
-                        const featureData = this.getFeatureData(type);
-                        room.icon = featureData.icon;
-                        room.label = featureData.label;
-                        room.featureType = type;
-                        room.color = `has-${type}`;
-                        this.featureStats[type] = (this.featureStats[type] || 0) + 1;
-                        added++;
-                    }
+        const addedFeatures = [];
+
+        // First pass: add to empty rooms
+        for (const [type, target] of Object.entries(targetCounts)) {
+            const current = this.featureStats[type] || 0;
+            const needed = Math.max(0, target - current);
+            
+            for (let i = 0; i < needed && index < shuffled.length; i++) {
+                const roomKey = shuffled[index++];
+                const room = this.rooms.get(roomKey);
+                if (room && room.type !== 'start' && !room.featureType) {
+                    const featureData = this.getFeatureData(type);
+                    room.icon = featureData.icon;
+                    room.label = featureData.label;
+                    room.featureType = type;
+                    room.color = `has-${type}`;
+                    this.featureStats[type] = (this.featureStats[type] || 0) + 1;
+                    added++;
+                    addedFeatures.push({ key: roomKey, type, ...featureData });
+                }
+            }
+        }
+
+        // Second pass: if we still need more, convert existing rooms
+        if (added < 3 && allNonStartRooms.length > 0) {
+            const remaining = allNonStartRooms.filter(k => {
+                const room = this.rooms.get(k);
+                return room && room.type !== 'start' && !room.featureType;
+            });
+            
+            const shuffledRemaining = this.shuffleArray(remaining);
+            for (let i = 0; i < Math.min(3 - added, shuffledRemaining.length); i++) {
+                const roomKey = shuffledRemaining[i];
+                const room = this.rooms.get(roomKey);
+                if (room) {
+                    // Pick a random feature type that's underrepresented
+                    const sortedTypes = Object.entries(this.featureStats)
+                        .sort((a, b) => a[1] - b[1]);
+                    const type = sortedTypes[0][0];
+                    const featureData = this.getFeatureData(type);
+                    room.icon = featureData.icon;
+                    room.label = featureData.label;
+                    room.featureType = type;
+                    room.color = `has-${type}`;
+                    this.featureStats[type] = (this.featureStats[type] || 0) + 1;
+                    added++;
+                    addedFeatures.push({ key: roomKey, type, ...featureData });
                 }
             }
         }
 
         return {
+            success: true,
+            message: `Balanced dungeon: added ${added} features`,
             added: added,
+            addedFeatures: addedFeatures,
             stats: this.featureStats,
             targets: targetCounts
         };
@@ -260,11 +294,12 @@ class DungeonMapGenerator {
     }
 
     shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+            [arr[i], arr[j]] = [arr[j], arr[i]];
         }
-        return array;
+        return arr;
     }
 
     addHistory(action, data) {
@@ -282,9 +317,8 @@ class DungeonMapGenerator {
             const key = `${lastAction.data.x},${lastAction.data.y}`;
             const room = this.rooms.get(key);
             if (room && room.type !== 'start') {
-                // Remove feature stats if it had one
                 if (room.featureType) {
-                    this.featureStats[room.featureType] = (this.featureStats[room.featureType] || 1) - 1;
+                    this.featureStats[room.featureType] = Math.max(0, (this.featureStats[room.featureType] || 1) - 1);
                     this.featuresApplied = this.featuresApplied.filter(f => f.key !== key);
                 }
                 this.rooms.delete(key);
@@ -329,6 +363,10 @@ class DungeonMapGenerator {
 
     getFeatureStats() {
         return this.featureStats;
+    }
+
+    getFeaturesApplied() {
+        return this.featuresApplied;
     }
 
     exportMapData() {
