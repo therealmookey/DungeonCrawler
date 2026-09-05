@@ -1,265 +1,193 @@
 /**
- * Dungeon Generator - App Controller
- * Verbindt de dungeon met de UI
+ * Dungeon Cartographer - App Controller
+ * Connects the dungeon generator to the UI
  */
 
-// DOMContentLoaded = wacht tot de hele pagina geladen is
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // ============================================
-    // INITIALISATIE - Maak de dungeon en vind alle elementen
-    // ============================================
-    
-    // Maak een nieuwe dungeon
-    const dungeon = new DungeonGenerator();
-    
-    // Vind alle HTML elementen die we nodig hebben
-    // document.getElementById('id') vindt een element met die id
+    const mapGenerator = new DungeonMapGenerator();
+    let currentMap = new Map();
+
     const elements = {
         generateBtn: document.getElementById('generateBtn'),
-        stepBtn: document.getElementById('stepBtn'),
-        resetBtn: document.getElementById('resetBtn'),
         exportBtn: document.getElementById('exportBtn'),
+        printBtn: document.getElementById('printBtn'),
+        resetBtn: document.getElementById('resetBtn'),
         roomCount: document.getElementById('roomCount'),
         depth: document.getElementById('depth'),
+        monsterCount: document.getElementById('monsterCount'),
         treasureCount: document.getElementById('treasureCount'),
         trapCount: document.getElementById('trapCount'),
-        health: document.getElementById('health'),
-        status: document.getElementById('status'),
+        bossCount: document.getElementById('bossCount'),
         grid: document.getElementById('dungeon-grid'),
-        log: document.getElementById('log')
+        log: document.getElementById('log'),
+        legendContainer: document.getElementById('legend-container')
     };
 
-    // ============================================
-    // UPDATE UI - Vernieuw het scherm
-    // ============================================
     function updateUI() {
-        // 1. Update alle statistieken
-        elements.roomCount.textContent = dungeon.rooms.size;
-        elements.depth.textContent = dungeon.depth;
-        elements.treasureCount.textContent = dungeon.treasureCount;
-        elements.trapCount.textContent = dungeon.trapCount;
-        elements.health.textContent = dungeon.health;
+        elements.roomCount.textContent = currentMap.size;
+        elements.depth.textContent = mapGenerator.depth;
+        elements.monsterCount.textContent = mapGenerator.stats.monsters || 0;
+        elements.treasureCount.textContent = mapGenerator.stats.treasures || 0;
+        elements.trapCount.textContent = mapGenerator.stats.traps || 0;
+        elements.bossCount.textContent = mapGenerator.stats.bosses || 0;
 
-        // 2. Speciale kleur voor health
-        const healthPercent = (dungeon.health / dungeon.maxHealth) * 100;
-        if (healthPercent < 25) {
-            elements.health.style.color = '#ff2222';  // Rood - gevaarlijk
-        } else if (healthPercent < 50) {
-            elements.health.style.color = '#ff8844';  // Oranje - voorzichtig
-        } else {
-            elements.health.style.color = '#44ff44';  // Groen - veilig
-        }
-
-        // 3. Update status
-        let statusText = '⏸️ Gepauzeerd';
-        if (dungeon.isComplete) {
-            statusText = '✅ Voltooid';
-        } else if (dungeon.isActive) {
-            statusText = '🔄 Genereren...';
-        }
-        elements.status.textContent = statusText;
-
-        // 4. Render het grid en de log
         renderGrid();
+        renderLegend();
         renderLog();
     }
 
-    // ============================================
-    // RENDER GRID - Teken de kamers
-    // ============================================
     function renderGrid() {
         const grid = elements.grid;
-        
-        // Check of er kamers zijn
-        if (dungeon.rooms.size === 0) {
-            grid.innerHTML = '<div style="padding: 50px; color: #666;">Geen kamers gevonden</div>';
+        if (currentMap.size === 0) {
+            grid.innerHTML = '<div style="padding: 50px; color: #666;">Click "Generate Dungeon" to create a map.</div>';
             return;
         }
 
-        // Bepaal de grenzen van de dungeon
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
-
-        // Loop door alle kamers om de grenzen te vinden
-        for (const [key, room] of dungeon.rooms) {
+        for (const [key, room] of currentMap) {
             minX = Math.min(minX, room.x);
             maxX = Math.max(maxX, room.x);
             minY = Math.min(minY, room.y);
             maxY = Math.max(maxY, room.y);
         }
 
-        // Bereken breedte en hoogte
         const width = maxX - minX + 1;
-        const height = maxY - minY + 1;
-
-        // Bepaal cel grootte (responsief)
         const containerWidth = elements.grid.parentElement.clientWidth - 40;
-        const cellSize = Math.min(55, Math.floor((containerWidth / width) - 2));
+        const cellSize = Math.min(65, Math.floor((containerWidth / width) - 2));
 
-        // Zet het grid klaar
         grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
         grid.innerHTML = '';
 
-        // Loop door alle rijen en kolommen
         for (let y = minY; y <= maxY; y++) {
             for (let x = minX; x <= maxX; x++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-
                 const key = `${x},${y}`;
-                const room = dungeon.rooms.get(key);
-                const isCurrent = dungeon.currentPos.x === x && dungeon.currentPos.y === y;
+                const room = currentMap.get(key);
 
                 if (room) {
-                    // Dit is een kamer
                     cell.classList.add('cell-room');
-                    
-                    // Voeg speciale classes toe
-                    if (room.color) {
-                        cell.classList.add(room.color);
-                    }
-                    if (room.type === 'start') {
-                        cell.classList.add('cell-start');
-                    }
-                    if (isCurrent) {
-                        cell.classList.add('cell-current');
-                    }
+                    if (room.color) cell.classList.add(room.color);
+                    if (room.type === 'start') cell.classList.add('cell-start');
 
-                    // Voeg icoon en label toe
                     const iconSpan = document.createElement('span');
                     iconSpan.className = 'icon';
                     iconSpan.textContent = room.icon || '⬜';
 
                     const labelSpan = document.createElement('span');
                     labelSpan.className = 'label';
-                    labelSpan.textContent = room.label || 'Kamer';
+                    labelSpan.textContent = room.description || room.label || 'Room';
 
                     cell.appendChild(iconSpan);
                     cell.appendChild(labelSpan);
-
-                    // Tooltip (info bij hover)
-                    if (room.hasBeenVisited) {
-                        cell.title = `Kamer ${room.id}: ${room.label}\nType: ${room.type}`;
-                    } else {
-                        cell.title = 'Onontdekte kamer';
-                    }
-
+                    cell.title = `Room ${room.id}: ${room.label} - ${room.description}`;
                 } else {
-                    // Dit is een muur (geen kamer)
                     cell.classList.add('cell-wall');
                 }
-
                 grid.appendChild(cell);
             }
         }
     }
 
-    // ============================================
-    // RENDER LOG - Toon de geschiedenis
-    // ============================================
-    function renderLog() {
-        const logDiv = elements.log;
-        
-        // Zet elke log regel om in HTML
-        logDiv.innerHTML = dungeon.logs.map(msg => {
-            let className = 'log-entry';
-            
-            // Kleur toevoegen op basis van inhoud
-            if (msg.includes('💰') || msg.includes('🎲') || msg.includes('🏁')) {
-                className += ' highlight';  // Goudkleurig
-            }
-            if (msg.includes('⚠️') || msg.includes('💀') || msg.includes('⚔️')) {
-                className += ' danger';     // Rood
-            }
-            if (msg.includes('✅') || msg.includes('🏪') || msg.includes('🧩')) {
-                className += ' success';    // Groen
-            }
-            
-            return `<div class="${className}">${msg}</div>`;
-        }).join('');
-        
-        // Scroll naar onder
-        logDiv.scrollTop = logDiv.scrollHeight;
-    }
+    function renderLegend() {
+        const legendDiv = elements.legendContainer;
+        if (!legendDiv) return;
 
-    // ============================================
-    // EVENT LISTENERS - Reageren op gebruikersacties
-    // ============================================
-    
-    // Genereer knop
-    elements.generateBtn.addEventListener('click', () => {
-        dungeon.generateFull();
-        updateUI();
-    });
-
-    // Volgende stap knop
-    elements.stepBtn.addEventListener('click', () => {
-        if (dungeon.isComplete) {
-            dungeon.addLog('⚠️ Dungeon is al voltooid!');
-            updateUI();
+        if (currentMap.size === 0) {
+            legendDiv.innerHTML = '<p>Generate a map to see the legend.</p>';
             return;
         }
-        dungeon.generateStep();
+
+        const legendItems = [
+            { type: 'start', icon: '🏠', label: 'Start' },
+            { type: 'boss', icon: '👑', label: 'Boss' },
+            { type: 'treasure', icon: '💰', label: 'Treasure' },
+            { type: 'trap', icon: '⚠️', label: 'Trap' },
+            { type: 'shop', icon: '🏪', label: 'Shop' },
+            { type: 'monster', icon: '👹', label: 'Monster' },
+            { type: 'puzzle', icon: '🧩', label: 'Puzzle' },
+            { type: 'empty', icon: '⬜', label: 'Empty' },
+        ];
+
+        let html = '<h3>📖 Legend</h3><ul>';
+        legendItems.forEach(item => {
+            html += `<li>
+                        <span style="font-size: 1.2em;">${item.icon}</span>
+                        <span>${item.label}</span>
+                     </li>`;
+        });
+        html += '</ul>';
+        legendDiv.innerHTML = html;
+    }
+
+    function renderLog() {
+        const logDiv = elements.log;
+        if (currentMap.size === 0) {
+            logDiv.innerHTML = '<div class="log-entry">🎲 Ready to generate a dungeon map.</div>';
+            return;
+        }
+        const logMessage = `✅ Map generated with ${currentMap.size} rooms. Depth: ${mapGenerator.depth}`;
+        logDiv.innerHTML = `<div class="log-entry">${logMessage}</div>`;
+    }
+
+    // Event Listeners
+    elements.generateBtn.addEventListener('click', () => {
+        mapGenerator.generateFullMap();
+        currentMap = new Map(mapGenerator.rooms);
         updateUI();
     });
 
-    // Reset knop
-    elements.resetBtn.addEventListener('click', () => {
-        dungeon.reset();
-        dungeon.addLog('🔄 Dungeon gereset!');
-        updateUI();
-    });
-
-    // Export knop
     elements.exportBtn.addEventListener('click', () => {
-        // Maak een JSON bestand van de dungeon
-        const data = dungeon.exportDungeon();
-        const blob = new Blob([data], { type: 'application/json' });
+        const data = mapGenerator.exportMapData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
-        // Maak een download link
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dungeon_${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `dungeon_map_${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
-        
-        // Opruimen
         URL.revokeObjectURL(url);
-        dungeon.addLog('📤 Dungeon geëxporteerd!');
-        updateUI();
     });
 
-    // ============================================
-    // KEYBOARD SHORTCUTS - Sneltoetsen
-    // ============================================
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            elements.generateBtn.click();  // Enter = Genereer
+    elements.printBtn.addEventListener('click', () => {
+        window.print();
+    });
+
+    elements.resetBtn.addEventListener('click', () => {
+        if (currentMap.size > 0) {
+            if (confirm('Are you sure you want to reset the map?')) {
+                mapGenerator.reset();
+                currentMap = new Map();
+                updateUI();
+            }
+        } else {
+            mapGenerator.reset();
+            currentMap = new Map();
+            updateUI();
         }
-        if (e.key === ' ' && e.target === document.body) {
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            elements.stepBtn.click();      // Spatie = Volgende stap
+            elements.generateBtn.click();
         }
         if (e.key === 'r' || e.key === 'R') {
-            elements.resetBtn.click();      // R = Reset
+            elements.resetBtn.click();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            // Let the browser handle print
         }
     });
 
-    // ============================================
-    // INITIAL RENDER - Toon de startstatus
-    // ============================================
-    dungeon.addLog('🎲 Welkom bij de Dungeon Generator!');
-    dungeon.addLog('💡 Enter = Genereer, Spatie = Volgende, R = Reset');
+    // Initial state
+    elements.log.innerHTML = '<div class="log-entry">🎲 Welcome to the Dungeon Cartographer! Press Enter or click "Generate Dungeon" to start.</div>';
     updateUI();
 
-    // ============================================
-    // WINDOW RESIZE - Pas aan bij schermverandering
-    // ============================================
+    // Handle resize for responsive grid
     let resizeTimeout;
     window.addEventListener('resize', () => {
-        // Wacht even voordat we hertekenen (performance)
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(renderGrid, 200);
     });

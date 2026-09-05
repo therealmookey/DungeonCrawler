@@ -1,70 +1,130 @@
 /* ============================================
-   GLOBAL RESET & BASE - Dit reset alle standaard browser styling
+   GLOBAL RESET & BASE
    ============================================ */
 * {
-    margin: 0;              # Geen marge
-    padding: 0;             # Geen padding
-    box-sizing: border-box; # Zorgt dat padding en border in de breedte vallen
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Courier New', monospace;  # Lettertype - lijkt op een oud computer scherm
-    background: #1a1a1a;    # Donkere achtergrond (dungeon sfeer)
-    color: #e0d6b0;         # Oud-papier kleur tekst
-    min-height: 100vh;      # Minimaal de hele schermhoogte
-    display: flex;          # Flexbox voor centreren
-    justify-content: center; # Horizontaal centreren
-    padding: 20px;          # Ruimte rondom
+    font-family: 'Courier New', monospace;
+    background: #1a1a1a;
+    color: #e0d6b0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+#app {
+    max-width: 1200px;
+    width: 100%;
 }
 
 /* ============================================
-   KLEUREN SYSTEEM - Hoe werkt het?
+   HEADER
    ============================================ */
-/*
-   #1a1a1a = Bijna zwart (achtergrond)
-   #2a2a2a = Donkergrijs (vakken)
-   #3a3a3a = Grijs (randen)
-   #d4a843 = Goud (accenten)
-   #e0d6b0 = Oud papier (tekst)
-   #8a7a5a = Bruin (subtiele tekst)
-*/
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
 
-/* ============================================
-   KOPPEN - Titels
-   ============================================ */
 header h1 {
-    color: #d4a843;         # Goudkleurig
-    text-shadow: 0 0 20px rgba(212, 168, 67, 0.3);  # Gloed-effect
-    font-size: 2.8em;       # Groot
-    letter-spacing: 2px;    # Meer ruimte tussen letters
+    color: #d4a843;
+    text-shadow: 0 0 20px rgba(212, 168, 67, 0.3);
+    font-size: 2.8em;
+    letter-spacing: 2px;
+}
+
+.subtitle {
+    color: #8a7a5a;
+    font-size: 1.1em;
+    margin-top: 5px;
 }
 
 /* ============================================
-   KNOPPEN - Interactie
+   CONTROLS
    ============================================ */
+.controls {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #3a3a3a;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 .btn {
-    padding: 12px 28px;     # Binnenruimte
-    font-size: 1.1em;       # Tekstgrootte
-    font-family: 'Courier New', monospace;  # Zelfde lettertype
-    border: 2px solid transparent;  # Rand, maar onzichtbaar
-    border-radius: 8px;     # Afgeronde hoeken
-    cursor: pointer;        # Verandert in handje bij hover
-    transition: all 0.3s ease;  # Vloeiende overgangen
+    padding: 12px 28px;
+    font-size: 1.1em;
+    font-family: 'Courier New', monospace;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    letter-spacing: 0.5px;
 }
 
 .btn:hover {
-    transform: translateY(-2px);  # Gaat iets omhoog bij hover
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);  # Schaduw
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
 }
 
 .btn-primary {
-    background: #d4a843;    # Goud achtergrond
-    color: #1a1a1a;         # Donkere tekst
-    border-color: #d4a843;  # Goud rand
+    background: #d4a843;
+    color: #1a1a1a;
+    border-color: #d4a843;
+}
+
+.btn-primary:hover {
+    background: #e8b84a;
+    border-color: #e8b84a;
+}
+
+.btn-secondary {
+    background: #3a4a6a;
+    color: #e0d6b0;
+    border-color: #4a5a8a;
+}
+
+.btn-secondary:hover {
+    background: #4a5a8a;
+    border-color: #5a6a9a;
+}
+
+.btn-danger {
+    background: #6a2a2a;
+    color: #e0d6b0;
+    border-color: #8a3a3a;
+}
+
+.btn-danger:hover {
+    background: #8a3a3a;
+    border-color: #aa4a4a;
+}
+
+.btn-success {
+    background: #2a5a2a;
+    color: #e0d6b0;
+    border-color: #3a7a3a;
+}
+
+.btn-success:hover {
+    background: #3a7a3a;
+    border-color: #4a9a4a;
 }
 
 /* ============================================
-   STATS - Informatie
+   STATS
    ============================================ */
 .stats {
     background: #2a2a2a;
@@ -72,16 +132,21 @@ header h1 {
     border-radius: 12px;
     border: 2px solid #3a3a3a;
     margin-bottom: 20px;
-    display: grid;          # Grid layout
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));  # Automatisch aanpassen
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 15px;
 }
 
+.stat-item {
+    text-align: center;
+    padding: 5px 0;
+}
+
 .stat-label {
-    display: block;         # Op eigen regel
+    display: block;
     font-size: 0.8em;
     color: #8a7a5a;
-    text-transform: uppercase;  # ALLES HOOFDLETTERS
+    text-transform: uppercase;
     letter-spacing: 1px;
 }
 
@@ -90,21 +155,55 @@ header h1 {
     font-size: 1.4em;
     color: #d4a843;
     font-weight: bold;
+    margin-top: 2px;
 }
 
 /* ============================================
-   DUNGEON GRID - Het speelveld
+   DUNGEON GRID
    ============================================ */
+#dungeon-container {
+    background: #0a0a0a;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #3a3a3a;
+    overflow: auto;
+    margin-bottom: 20px;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#dungeon-grid {
+    display: grid;
+    gap: 2px;
+    margin: 0 auto;
+}
+
 .cell {
-    width: 55px;
-    height: 55px;
+    width: 65px;
+    height: 65px;
     border: 1px solid #2a2a2a;
     display: flex;
-    flex-direction: column;  # Content onder elkaar
-    align-items: center;     # Horizontaal centreren
-    justify-content: center; # Verticaal centreren
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    text-align: center;
     transition: all 0.3s ease;
+    position: relative;
     border-radius: 3px;
+}
+
+.cell-wall {
+    background: #141414;
+    border-color: #1a1a1a;
+}
+
+.cell-wall::after {
+    content: '⬛';
+    font-size: 1.5em;
+    opacity: 0.3;
 }
 
 .cell-room {
@@ -113,38 +212,341 @@ header h1 {
 }
 
 .cell-room.has-trap {
-    background: #3a1a1a;    # Roodachtig voor vallen
+    background: #3a1a1a;
     border-color: #8a2a2a;
-    animation: pulse-red 2s infinite;  # Knipperende animatie
+    animation: pulse-red 2s infinite;
 }
 
-.cell-current {
-    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.4);  # Goud gloed
-    border-color: #d4a843 !important;
-    transform: scale(1.05);  # Iets groter
-    z-index: 1;              # Bovenop andere elementen
+.cell-room.has-treasure {
+    background: #1a3a1a;
+    border-color: #2a8a2a;
+    animation: pulse-green 2s infinite;
+}
+
+.cell-room.has-boss {
+    background: #3a1a3a;
+    border-color: #8a2a8a;
+    animation: pulse-purple 2s infinite;
+}
+
+.cell-room.has-shop {
+    background: #1a2a3a;
+    border-color: #2a4a8a;
+}
+
+.cell-start {
+    background: #2a3a1a;
+    border-color: #4a8a2a;
+    animation: pulse-gold 2s infinite;
+}
+
+.cell .icon {
+    font-size: 1.8em;
+    line-height: 1;
+}
+
+.cell .label {
+    font-size: 0.5em;
+    opacity: 0.9;
+    margin-top: 2px;
+    color: #ddd;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 /* ============================================
-   ANIMATIES - Bewegende effecten
+   ANIMATIONS
    ============================================ */
 @keyframes pulse-red {
     0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.2); }
     50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.4); }
 }
-/* Dit zorgt dat rode kamers (vallen) zachtjes knipperen */
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.4); }
+}
+
+@keyframes pulse-purple {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(255, 0, 255, 0.4); }
+}
+
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 5px rgba(212, 168, 67, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.4); }
+}
 
 /* ============================================
-   RESPONSIVE - Aanpassen voor verschillende schermen
+   LEGEND
+   ============================================ */
+#legend-container {
+    margin-bottom: 20px;
+}
+
+#legend-container ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+#legend-container li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a1a1a;
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid #3a3a3a;
+}
+
+/* ============================================
+   LOG
+   ============================================ */
+.log-container {
+    background: #2a2a2a;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 2px solid #3a3a3a;
+    margin-bottom: 20px;
+}
+
+.log-container h3 {
+    color: #d4a843;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+#log {
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#log::-webkit-scrollbar {
+    width: 8px;
+}
+
+#log::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+
+#log::-webkit-scrollbar-thumb {
+    background: #d4a843;
+    border-radius: 4px;
+}
+
+.log-entry {
+    padding: 6px 0;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 0.9em;
+    color: #c0b8a0;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+    text-align: center;
+    color: #5a4a3a;
+    font-size: 0.9em;
+    padding: 20px 0;
+    border-top: 1px solid #2a2a2a;
+}
+
+footer a {
+    color: #d4a843;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   PRINT STYLES - Optimized for printing
+   ============================================ */
+@media print {
+    body {
+        background: white;
+        color: black;
+        padding: 10px;
+    }
+
+    #app {
+        max-width: 100%;
+    }
+
+    .controls,
+    .log-container,
+    footer {
+        display: none !important;
+    }
+
+    .stats {
+        background: #f0f0f0;
+        border: 1px solid #ccc;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .stat-value {
+        color: #333;
+    }
+
+    .stat-label {
+        color: #666;
+    }
+
+    #dungeon-container {
+        background: white;
+        border: 1px solid #ccc;
+        padding: 10px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .cell {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        border-color: #999;
+    }
+
+    .cell-room {
+        background: #e8e8e8;
+        border-color: #999;
+    }
+
+    .cell-wall {
+        background: #ddd;
+        border-color: #999;
+    }
+
+    .cell-wall::after {
+        content: ' ';
+        opacity: 0.5;
+    }
+
+    .cell-room.has-trap {
+        background: #ffcccc;
+        border-color: #cc0000;
+        animation: none !important;
+    }
+
+    .cell-room.has-treasure {
+        background: #ccffcc;
+        border-color: #00cc00;
+        animation: none !important;
+    }
+
+    .cell-room.has-boss {
+        background: #e6cce6;
+        border-color: #990099;
+        animation: none !important;
+    }
+
+    .cell-room.has-shop {
+        background: #cce0ff;
+        border-color: #0066cc;
+    }
+
+    .cell-start {
+        background: #ccffcc;
+        border-color: #009900;
+        animation: none !important;
+    }
+
+    .cell .label {
+        color: #222;
+        font-size: 0.5em;
+    }
+
+    #legend-container {
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    #legend-container li {
+        background: #f0f0f0;
+        border: 1px solid #ccc;
+    }
+
+    header h1 {
+        color: #333;
+        text-shadow: none;
+    }
+
+    .subtitle {
+        color: #666;
+    }
+}
+
+/* ============================================
+   RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
-    /* Als het scherm kleiner is dan 768px (tablets/telefoons) */
-    .cell {
-        width: 40px;
-        height: 40px;
+    header h1 {
+        font-size: 2em;
     }
+
+    .cell {
+        width: 45px;
+        height: 45px;
+    }
+
     .cell .icon {
         font-size: 1.3em;
     }
-    /* Kleinere cellen en iconen op mobiel */
+
+    .cell .label {
+        font-size: 0.4em;
+    }
+
+    .stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 12px 15px;
+    }
+
+    .stat-value {
+        font-size: 1.1em;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9em;
+    }
+
+    .controls {
+        padding: 15px;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cell {
+        width: 35px;
+        height: 35px;
+    }
+
+    .cell .icon {
+        font-size: 1em;
+    }
+
+    .cell .label {
+        display: none;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    header h1 {
+        font-size: 1.5em;
+    }
 }

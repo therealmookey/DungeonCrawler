@@ -1,59 +1,71 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-    <!-- Meta-informatie voor de browser -->
-    <meta charset="UTF-8">                    # Zorgt voor Nederlandse tekens (ë, ï, etc.)
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  # Zorgt dat het goed werkt op mobiel
-    <title>⚔️ Dungeon Generator ⚔️</title>    # De titel die in de browser tab verschijnt
-    
-    <!-- Link naar CSS bestand -->
-    <link rel="stylesheet" href="css/style.css">  # Haalt alle styling op
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗺️ Dungeon Cartographer</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="app">                           # Hoofdcontainer - alles zit hierin
-    
-        <!-- HEADER: De titel van de pagina -->
+    <div id="app">
         <header>
-            <h1>⚔️ Dungeon Generator ⚔️</h1>    # Grote titel
-            <p class="subtitle">Laat de dobbelstenen je pad bepalen</p>  # Ondertitel
+            <h1>🗺️ Dungeon Cartographer</h1>
+            <p class="subtitle">Generate printable dungeon maps for your D&D campaign</p>
         </header>
 
-        <!-- CONTROLES: Alle knoppen -->
         <div class="controls">
-            <button id="generateBtn" class="btn btn-primary">🎲 Genereer Dungeon</button>
-            <button id="stepBtn" class="btn btn-secondary">🚶 Volgende Kamer</button>
+            <button id="generateBtn" class="btn btn-primary">🎲 Generate Dungeon</button>
+            <button id="exportBtn" class="btn btn-success">📤 Export JSON</button>
+            <button id="printBtn" class="btn btn-secondary">🖨️ Print Map</button>
             <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
-            <button id="exportBtn" class="btn btn-success">📤 Exporteer</button>
         </div>
 
-        <!-- STATS: Alle statistieken -->
         <div class="stats">
             <div class="stat-item">
-                <span class="stat-label">🏠 Kamers</span>
+                <span class="stat-label">🏠 Rooms</span>
                 <span class="stat-value" id="roomCount">0</span>
             </div>
-            <!-- Meer stats... -->
+            <div class="stat-item">
+                <span class="stat-label">📏 Depth</span>
+                <span class="stat-value" id="depth">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">👹 Monsters</span>
+                <span class="stat-value" id="monsterCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">💰 Treasure</span>
+                <span class="stat-value" id="treasureCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">⚠️ Traps</span>
+                <span class="stat-value" id="trapCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">👑 Bosses</span>
+                <span class="stat-value" id="bossCount">0</span>
+            </div>
         </div>
 
-        <!-- DUNGEON GRID: Het speelveld -->
         <div id="dungeon-container">
-            <div id="dungeon-grid"></div>    # Hier komen de kamers
+            <div id="dungeon-grid"></div>
         </div>
 
-        <!-- LOG: De geschiedenis -->
+        <div id="legend-container" class="log-container">
+            <!-- Legend will be rendered by JavaScript -->
+        </div>
+
         <div class="log-container">
-            <h3>📜 Dungeon Log</h3>
-            <div id="log"></div>             # Hier komen de berichten
+            <h3>📜 Generation Log</h3>
+            <div id="log"></div>
         </div>
 
-        <!-- FOOTER: Onderaan -->
         <footer>
-            <p>Gemaakt met 🎲 voor D&D fans</p>
+            <p>Created with 🎲 for D&D | <a href="https://github.com/your-username/dungeon-cartographer" target="_blank">GitHub</a></p>
         </footer>
     </div>
 
-    <!-- JavaScript bestanden -->
-    <script src="js/dungeon.js"></script>    # Eerst de logica
-    <script src="js/app.js"></script>        # Dan de controller
+    <script src="js/dungeon.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
