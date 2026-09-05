@@ -449,6 +449,27 @@ header h1 {
 .btn-success:hover:not(:disabled) { background: #2a6a2a; border-color: #3a8a3a; }
 
 /* ============================================
+   BALANCE BUTTON - Used State
+   ============================================ */
+.btn-warning.balance-used {
+    background: #2a3a2a;
+    color: #88ff88;
+    border-color: #3a5a3a;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-warning.balance-used:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-warning.balance-used::after {
+    content: ' ✓';
+    color: #88ff88;
+}
+
+/* ============================================
    FEATURE STATS
    ============================================ */
 .feature-stats {

@@ -1,724 +1,1068 @@
 /**
- * Dungeon Cartographer - App Controller
- * Three Column Layout with Tutorial System
+ * Dungeon Cartographer - Core Generator
+ * With Balance Lock (one-time use)
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const mapGenerator = new DungeonMapGenerator();
-    let currentMap = new Map();
-
-    // DOM Elements
-    const elements = {
-        rollD8Btn: document.getElementById('rollD8Btn'),
-        rollD20Btn: document.getElementById('rollD20Btn'),
-        rollD4Btn: document.getElementById('rollD4Btn'),
-        balanceBtn: document.getElementById('balanceBtn'),
-        placeObjectiveBtn: document.getElementById('placeObjectiveBtn'),
-        resetBtn: document.getElementById('resetBtn'),
-        undoBtn: document.getElementById('undoBtn'),
-        printBtn: document.getElementById('printBtn'),
-        tutorialBtn: document.getElementById('tutorialBtn'),
-        d8Display: document.getElementById('d8Display'),
-        d20Display: document.getElementById('d20Display'),
-        d4Display: document.getElementById('d4Display'),
-        chargesDisplay: document.getElementById('chargesDisplay'),
-        difficultyDisplay: document.getElementById('difficultyDisplay'),
-        difficultyDetail: document.getElementById('difficultyDetail'),
-        position: document.getElementById('position'),
-        direction: document.getElementById('direction'),
-        diceStatus: document.getElementById('diceStatus'),
-        grid: document.getElementById('dungeon-grid'),
-        log: document.getElementById('log'),
-        statsContent: document.getElementById('statsContent'),
-        roomTypesContent: document.getElementById('roomTypesContent'),
-        featureStats: document.getElementById('featureStats')
-    };
-
-    // State
-    let currentD20Roll = null;
-    let currentD4Roll = null;
-    let currentD8Roll = 3;
-    let chargesRemaining = 0;
-
-    // ============================================
-    // UPDATE UI
-    // ============================================
-    function updateUI() {
-        // Position
-        elements.position.textContent = `(${mapGenerator.currentPos.x}, ${mapGenerator.currentPos.y})`;
-        
-        // Dice displays
-        if (currentD20Roll !== null) {
-            elements.d20Display.textContent = currentD20Roll;
-        }
-        if (currentD4Roll !== null) {
-            elements.d4Display.textContent = currentD4Roll;
-        }
-        elements.d8Display.textContent = currentD8Roll;
-        elements.chargesDisplay.textContent = chargesRemaining;
-
-        // Difficulty
-        const diff = mapGenerator.getCurrentDifficulty();
-        elements.difficultyDisplay.textContent = diff.name;
-        elements.difficultyDisplay.style.color = diff.color;
-        elements.difficultyDetail.textContent = diff.description;
-
-        // Update status
-        updateStatus();
-
-        // Update stats
-        updateDungeonStats();
-        updateRoomTypes();
-        updateFeatureStats();
-
-        renderGrid();
-        renderLog();
-    }
-
-    function updateStatus() {
-        if (chargesRemaining > 0) {
-            elements.diceStatus.textContent = `✅ ${chargesRemaining} charges remaining - Roll D4!`;
-            elements.diceStatus.className = 'dice-status active';
-            elements.rollD4Btn.disabled = false;
-        } else if (chargesRemaining === 0 && currentD20Roll !== null) {
-            elements.diceStatus.textContent = '⏳ No charges - Roll D20 again!';
-            elements.diceStatus.className = 'dice-status waiting';
-            elements.rollD4Btn.disabled = true;
-        } else {
-            elements.diceStatus.textContent = '🎲 Roll D20 to get charges!';
-            elements.diceStatus.className = 'dice-status waiting';
-            elements.rollD4Btn.disabled = true;
-        }
-    }
-
-    // ============================================
-    // DUNGEON STATS
-    // ============================================
-    function updateDungeonStats() {
-        const statsDiv = elements.statsContent;
-        if (!statsDiv) return;
-
-        if (currentMap.size === 0) {
-            statsDiv.innerHTML = '<span style="color: #666; grid-column: 1/-1;">Build a dungeon to see stats</span>';
-            return;
-        }
-
-        const stats = mapGenerator.getDungeonStats();
-        const diff = stats.difficulty;
-        
-        let html = '';
-        
-        // Rooms
-        html += `<div class="stat-item">
-                    <span class="stat-label">🏠 Rooms</span>
-                    <span class="stat-value">${stats.totalRooms}</span>
-                </div>`;
-        
-        // Depth
-        html += `<div class="stat-item">
-                    <span class="stat-label">📏 Depth</span>
-                    <span class="stat-value">${stats.depth}</span>
-                </div>`;
-        
-        // Features total
-        let totalFeatures = 0;
-        for (const [type, count] of Object.entries(stats.featureStats)) {
-            if (type !== 'monsterTreasure' && type !== 'objective') {
-                totalFeatures += count;
+class DungeonMapGenerator {
+    constructor() {
+        this.difficultyConfig = {
+            1: {
+                name: 'Very Easy',
+                color: '#44ff44',
+                maxMonsters: 2,
+                bossCount: 0,
+                treasureMin: 0,
+                treasureMax: 1,
+                trapMin: 0,
+                trapMax: 1,
+                bossMinDistance: 8,
+                shopChance: 0,
+                emptyRoomChance: 60,
+                monsterTreasureChance: 25,
+                objectiveDistance: 5,
+                description: 'Ideal for beginners, mostly empty rooms'
+            },
+            2: {
+                name: 'Easy',
+                color: '#88ff88',
+                maxMonsters: 3,
+                bossCount: 0,
+                treasureMin: 1,
+                treasureMax: 2,
+                trapMin: 1,
+                trapMax: 2,
+                bossMinDistance: 7,
+                shopChance: 5,
+                emptyRoomChance: 45,
+                monsterTreasureChance: 30,
+                objectiveDistance: 6,
+                description: 'Light challenge, some monsters and traps'
+            },
+            3: {
+                name: 'Normal',
+                color: '#ffff44',
+                maxMonsters: 3,
+                bossCount: 1,
+                treasureMin: 1,
+                treasureMax: 2,
+                trapMin: 1,
+                trapMax: 2,
+                bossMinDistance: 6,
+                shopChance: 8,
+                emptyRoomChance: 35,
+                monsterTreasureChance: 35,
+                objectiveDistance: 7,
+                description: 'Balanced dungeon with a boss encounter'
+            },
+            4: {
+                name: 'Normal+',
+                color: '#ffaa44',
+                maxMonsters: 4,
+                bossCount: 1,
+                treasureMin: 2,
+                treasureMax: 3,
+                trapMin: 2,
+                trapMax: 3,
+                bossMinDistance: 6,
+                shopChance: 8,
+                emptyRoomChance: 28,
+                monsterTreasureChance: 40,
+                objectiveDistance: 8,
+                description: 'Moderate challenge with more enemies'
+            },
+            5: {
+                name: 'Hard',
+                color: '#ff6644',
+                maxMonsters: 4,
+                bossCount: 1,
+                treasureMin: 2,
+                treasureMax: 3,
+                trapMin: 2,
+                trapMax: 3,
+                bossMinDistance: 5,
+                shopChance: 5,
+                emptyRoomChance: 22,
+                monsterTreasureChance: 40,
+                objectiveDistance: 9,
+                description: 'Significant challenge, many enemies and traps'
+            },
+            6: {
+                name: 'Hard+',
+                color: '#ff4444',
+                maxMonsters: 5,
+                bossCount: 1,
+                treasureMin: 2,
+                treasureMax: 3,
+                trapMin: 3,
+                trapMax: 4,
+                bossMinDistance: 5,
+                shopChance: 5,
+                emptyRoomChance: 18,
+                monsterTreasureChance: 45,
+                objectiveDistance: 10,
+                description: 'Dangerous, prepare for tough fights'
+            },
+            7: {
+                name: 'Very Hard',
+                color: '#cc2244',
+                maxMonsters: 5,
+                bossCount: 2,
+                treasureMin: 3,
+                treasureMax: 4,
+                trapMin: 3,
+                trapMax: 4,
+                bossMinDistance: 4,
+                shopChance: 3,
+                emptyRoomChance: 15,
+                monsterTreasureChance: 50,
+                objectiveDistance: 11,
+                description: 'Extremely dangerous, multiple bosses'
+            },
+            8: {
+                name: '💀 Deadly',
+                color: '#ff0044',
+                maxMonsters: 6,
+                bossCount: 3,
+                treasureMin: 3,
+                treasureMax: 4,
+                trapMin: 4,
+                trapMax: 5,
+                bossMinDistance: 3,
+                shopChance: 3,
+                emptyRoomChance: 12,
+                monsterTreasureChance: 55,
+                objectiveDistance: 12,
+                description: 'Near impossible, maximum challenge!'
             }
-        }
-        html += `<div class="stat-item">
-                    <span class="stat-label">🎯 Features</span>
-                    <span class="stat-value">${totalFeatures}</span>
-                </div>`;
-        
-        // Farthest room
-        if (stats.farthestRoom) {
-            html += `<div class="stat-item">
-                        <span class="stat-label">📍 Farthest</span>
-                        <span class="stat-value">${stats.farthestRoom.distance}</span>
-                    </div>`;
-        }
-        
-        // Goal
-        if (stats.objectivePlaced) {
-            html += `<div class="stat-item">
-                        <span class="stat-label">⭐ Goal</span>
-                        <span class="stat-value">✅ Placed</span>
-                    </div>`;
-        } else {
-            html += `<div class="stat-item">
-                        <span class="stat-label">⭐ Goal</span>
-                        <span class="stat-value" style="color: #666;">Not set</span>
-                    </div>`;
-        }
-        
-        // Direction stats
-        const totalMoves = stats.directionStats.totalMoves || 0;
-        if (totalMoves > 0) {
-            const newPct = ((stats.directionStats.newDirections / totalMoves) * 100).toFixed(0);
-            html += `<div class="stat-item">
-                        <span class="stat-label">🧭 New</span>
-                        <span class="stat-value">${newPct}%</span>
-                    </div>`;
-            html += `<div class="stat-item">
-                        <span class="stat-label">↩️ Backup</span>
-                        <span class="stat-value">${100 - newPct}%</span>
-                    </div>`;
-        }
-        
-        statsDiv.innerHTML = html;
-    }
-
-    function updateRoomTypes() {
-        const typesDiv = elements.roomTypesContent;
-        if (!typesDiv) return;
-
-        if (currentMap.size === 0) {
-            typesDiv.innerHTML = '<span style="color: #666;">No rooms yet</span>';
-            return;
-        }
-
-        const stats = mapGenerator.getDungeonStats();
-        const typeIcons = {
-            start: '🏠',
-            monster: '👹',
-            treasure: '💰',
-            trap: '⚠️',
-            boss: '👑',
-            puzzle: '🧩',
-            shop: '🏪',
-            objective: '⭐',
-            empty: '⬜'
         };
         
-        let html = '';
-        const sortedTypes = Object.entries(stats.percentages).sort((a, b) => b[1] - a[1]);
-        
-        for (const [type, pct] of sortedTypes) {
-            const icon = typeIcons[type] || '📦';
-            const count = stats.roomTypes[type] || 0;
-            if (count > 0) {
-                html += `<span class="room-type-item">
-                            <span class="icon">${icon}</span>
-                            <span class="count">${count}</span>
-                            <span class="pct">(${pct}%)</span>
-                        </span>`;
-            }
-        }
-        
-        typesDiv.innerHTML = html || '<span style="color: #666;">No rooms yet</span>';
+        this.difficulty = 3;
+        this.roomDirectionMemory = new Map();
+        this.objectivePlaced = false;
+        this.objectivePosition = null;
+        this.balanceUsed = false;
+        this.reset();
     }
 
-    function updateFeatureStats() {
-        const stats = mapGenerator.getFeatureStats();
-        const statDiv = elements.featureStats;
-        if (!statDiv) return;
-
-        const featureIcons = {
-            treasure: '💰',
-            trap: '⚠️',
-            monster: '👹',
-            puzzle: '🧩',
-            shop: '🏪',
-            boss: '👑',
-            monsterTreasure: '💎',
-            objective: '⭐'
+    reset() {
+        this.rooms = new Map();
+        this.currentPos = { x: 0, y: 0 };
+        this.depth = 0;
+        this.roomCounter = 0;
+        this.history = [];
+        this.charges = 0;
+        this.d20Rolls = [];
+        this.d4Rolls = [];
+        this.d8Roll = this.difficulty;
+        this.currentD20 = null;
+        this.currentD4 = null;
+        this.featuresApplied = [];
+        this.roomDirectionMemory = new Map();
+        this.objectivePlaced = false;
+        this.objectivePosition = null;
+        this.balanceUsed = false;
+        this.featureStats = {
+            treasure: 0,
+            trap: 0,
+            monster: 0,
+            puzzle: 0,
+            shop: 0,
+            boss: 0,
+            monsterTreasure: 0,
+            objective: 0
         };
-
-        let html = '';
-        let totalFeatures = 0;
-        for (const [type, count] of Object.entries(stats)) {
-            if (count > 0 && type !== 'monsterTreasure') {
-                totalFeatures += count;
-                const icon = featureIcons[type] || '📦';
-                html += `<span class="feature-stat">${icon} ${count}</span>`;
-            }
-        }
+        this.roomDistanceCache = new Map();
+        this.backupAttempts = 0;
+        this.newDirectionAttempts = 0;
+        this.totalRoomsPlaced = 0;
         
-        if (stats.monsterTreasure > 0) {
-            html += `<span class="feature-stat" style="border-color: #ffd700;">💎 ${stats.monsterTreasure}</span>`;
-        }
-        
-        if (stats.objective > 0) {
-            html += `<span class="feature-stat" style="border-color: #ffd700; animation: pulse-objective 2s infinite;">⭐ ${stats.objective}</span>`;
-        }
-        
-        if (totalFeatures === 0 && stats.monsterTreasure === 0 && stats.objective === 0) {
-            html = '<span style="color: #666;">No features yet</span>';
-        } else {
-            html = `<span style="color: #888; margin-right: 8px;">🎯 Features:</span> ${html}`;
-        }
-        
-        statDiv.innerHTML = html;
+        this.addRoom(0, 0, 'start', '🏠', 'START');
+        this.currentPos = { x: 0, y: 0 };
+        this.addHistory('start', { x: 0, y: 0 });
+        this.calculateAllDistances();
+        this.roomDirectionMemory.set('0,0', new Set());
     }
 
     // ============================================
-    // RENDER GRID
+    // DICE FUNCTIONS
     // ============================================
-    function renderGrid() {
-        const grid = elements.grid;
-        if (currentMap.size === 0) {
-            grid.innerHTML = '<div style="padding: 50px; color: #666; text-align: center;">🎲 Roll D8 for difficulty, then D20 to start!</div>';
-            return;
+    rollDice(sides) {
+        return Math.floor(Math.random() * sides) + 1;
+    }
+
+    getDirection(d4) {
+        const directions = {
+            1: { dx: 0, dy: -1, name: 'North', emoji: '⬆️' },
+            2: { dx: 1, dy: 0, name: 'East', emoji: '➡️' },
+            3: { dx: 0, dy: 1, name: 'South', emoji: '⬇️' },
+            4: { dx: -1, dy: 0, name: 'West', emoji: '⬅️' }
+        };
+        return directions[d4] || directions[1];
+    }
+
+    // ============================================
+    // SMART DIRECTION SYSTEM
+    // ============================================
+    getUnexploredDirections() {
+        const key = `${this.currentPos.x},${this.currentPos.y}`;
+        const used = this.roomDirectionMemory.get(key) || new Set();
+        const allDirections = [1, 2, 3, 4];
+        return allDirections.filter(d => !used.has(d));
+    }
+
+    getAvailableDirections() {
+        const allDirections = [1, 2, 3, 4];
+        const available = [];
+        for (const d of allDirections) {
+            const dir = this.getDirection(d);
+            const newX = this.currentPos.x + dir.dx;
+            const newY = this.currentPos.y + dir.dy;
+            if (!this.rooms.has(`${newX},${newY}`)) {
+                available.push(d);
+            }
+        }
+        return available;
+    }
+
+    getSmartDirection() {
+        const unexplored = this.getUnexploredDirections();
+        const available = this.getAvailableDirections();
+        
+        if (available.length === 0) {
+            return this.rollDice(4);
         }
 
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-        for (const [key, room] of currentMap) {
-            minX = Math.min(minX, room.x);
-            maxX = Math.max(maxX, room.x);
-            minY = Math.min(minY, room.y);
-            maxY = Math.max(maxY, room.y);
+        if (unexplored.length > 0) {
+            if (this.rollDice(100) <= 70) {
+                this.newDirectionAttempts++;
+                const index = this.rollDice(unexplored.length) - 1;
+                return unexplored[index];
+            }
         }
 
-        // Add extra padding for better scrolling visibility
-        const padding = 3;
-        minX -= padding;
-        maxX += padding;
-        minY -= padding;
-        maxY += padding;
+        this.backupAttempts++;
+        const availableDirections = this.getAvailableDirections();
+        const existingDirections = [1, 2, 3, 4].filter(d => {
+            const dir = this.getDirection(d);
+            const newX = this.currentPos.x + dir.dx;
+            const newY = this.currentPos.y + dir.dy;
+            const key = `${newX},${newY}`;
+            return this.rooms.has(key) && key !== `${this.currentPos.x},${this.currentPos.y}`;
+        });
 
-        const width = maxX - minX + 1;
-        const containerWidth = elements.grid.parentElement.clientWidth - 40;
-        const cellSize = Math.min(65, Math.floor((containerWidth / width) - 2));
+        if (availableDirections.length > 0 && this.rollDice(100) <= 60) {
+            const index = this.rollDice(availableDirections.length) - 1;
+            return availableDirections[index];
+        } else if (existingDirections.length > 0) {
+            const index = this.rollDice(existingDirections.length) - 1;
+            return existingDirections[index];
+        } else if (availableDirections.length > 0) {
+            const index = this.rollDice(availableDirections.length) - 1;
+            return availableDirections[index];
+        }
 
-        grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
-        grid.innerHTML = '';
+        return this.rollDice(4);
+    }
 
-        for (let y = minY; y <= maxY; y++) {
-            for (let x = minX; x <= maxX; x++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                const key = `${x},${y}`;
-                const room = currentMap.get(key);
-                const isCurrent = mapGenerator.currentPos.x === x && mapGenerator.currentPos.y === y;
+    rollForDirection() {
+        return this.getSmartDirection();
+    }
 
-                if (room) {
-                    cell.classList.add('cell-room');
-                    
-                    if (room.type === 'start') {
-                        cell.classList.add('cell-start');
-                    }
-                    
-                    if (room.color) {
-                        cell.classList.add(room.color);
-                    }
-                    
-                    if (isCurrent) {
-                        cell.classList.add('cell-current');
-                    }
+    // ============================================
+    // DISTANCE CALCULATIONS
+    // ============================================
+    calculateDistance(x, y) {
+        return Math.abs(x) + Math.abs(y);
+    }
 
-                    const iconSpan = document.createElement('span');
-                    iconSpan.className = 'icon';
-                    iconSpan.textContent = room.icon || '⬜';
+    calculateAllDistances() {
+        this.roomDistanceCache.clear();
+        for (const [key, room] of this.rooms) {
+            const dist = this.calculateDistance(room.x, room.y);
+            this.roomDistanceCache.set(key, dist);
+        }
+    }
 
-                    const labelSpan = document.createElement('span');
-                    labelSpan.className = 'label';
-                    labelSpan.textContent = room.label || '';
+    getDistantRooms(minDistance) {
+        const result = [];
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'start' || room.type === 'objective') continue;
+            const dist = this.calculateDistance(room.x, room.y);
+            if (dist >= minDistance && !room.featureType) {
+                result.push({ key, room, distance: dist });
+            }
+        }
+        return result.sort((a, b) => b.distance - a.distance);
+    }
 
-                    cell.appendChild(iconSpan);
-                    cell.appendChild(labelSpan);
-                    
-                    let tooltip = `Room ${room.id}`;
-                    if (room.type === 'start') {
-                        tooltip = '⭐ START - The beginning of your dungeon';
-                    }
-                    if (room.type === 'objective') {
-                        tooltip = '⭐ GOAL - The adventurers\' destination!';
-                    }
-                    if (room.featureType && room.type !== 'objective') {
-                        tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
-                        if (room.hasTreasure) {
-                            tooltip += ' 💎 (has treasure)';
-                        }
-                        const dist = mapGenerator.getRoomDistance(key);
-                        tooltip += `\n📍 ${dist} rooms from start`;
-                    }
-                    cell.title = tooltip;
-                } else {
-                    cell.classList.add('cell-wall');
+    // ============================================
+    // DIFFICULTY & CHARGES
+    // ============================================
+    rollForCharges() {
+        this.d20Rolls = [];
+        let roll = 0;
+        let count = 0;
+        
+        do {
+            roll = this.rollDice(20);
+            this.d20Rolls.push(roll);
+            count++;
+        } while (roll !== 1 && count < 100);
+        
+        this.charges = this.d20Rolls.length;
+        this.currentD20 = roll;
+        
+        return {
+            rolls: this.d20Rolls,
+            charges: this.charges,
+            finalRoll: roll
+        };
+    }
+
+    rollForDifficulty() {
+        const d8 = this.rollDice(8);
+        const config = this.setDifficulty(d8);
+        return {
+            roll: d8,
+            config: config,
+            name: config.name
+        };
+    }
+
+    setDifficulty(d8Value) {
+        const validValues = [1, 2, 3, 4, 5, 6, 7, 8];
+        if (!validValues.includes(d8Value)) {
+            d8Value = 3;
+        }
+        this.difficulty = d8Value;
+        return this.difficultyConfig[d8Value];
+    }
+
+    getCurrentDifficulty() {
+        return this.difficultyConfig[this.difficulty] || this.difficultyConfig[3];
+    }
+
+    // ============================================
+    // FEATURE CHECK
+    // ============================================
+    checkForFeature(x, y) {
+        const diffConfig = this.difficultyConfig[this.difficulty];
+        const roll = this.rollDice(20);
+        const key = `${x},${y}`;
+        const distance = this.calculateDistance(x, y);
+        
+        if (this.rollDice(100) <= diffConfig.emptyRoomChance) {
+            return null;
+        }
+        
+        if (roll === 20) {
+            if (distance >= diffConfig.bossMinDistance) {
+                const currentBosses = this.featureStats.boss || 0;
+                if (currentBosses < diffConfig.bossCount) {
+                    return {
+                        type: 'boss',
+                        icon: '👑',
+                        label: 'BOSS',
+                        description: 'Boss Chamber'
+                    };
                 }
-                grid.appendChild(cell);
             }
+            const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
+            return {
+                type: 'monster',
+                icon: hasTreasure ? '👹💎' : '👹',
+                label: hasTreasure ? 'MONSTER+' : 'MONSTER',
+                description: 'Monster Lair',
+                hasTreasure: hasTreasure
+            };
         }
-
-        // Scroll to center on current position
-        setTimeout(scrollToCurrent, 50);
+        
+        if (roll === 18 || roll === 19) {
+            if (this.rollDice(100) <= diffConfig.shopChance) {
+                return {
+                    type: 'shop',
+                    icon: '🏪',
+                    label: 'SHOP',
+                    description: 'Merchant Shop'
+                };
+            }
+            return {
+                type: 'treasure',
+                icon: '💰',
+                label: 'TREASURE',
+                description: 'Treasure Hoard'
+            };
+        }
+        
+        if (roll >= 11 && roll <= 15) {
+            const currentMonsters = this.featureStats.monster || 0;
+            if (currentMonsters < diffConfig.maxMonsters) {
+                const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
+                return {
+                    type: 'monster',
+                    icon: hasTreasure ? '👹💎' : '👹',
+                    label: hasTreasure ? 'MONSTER+' : 'MONSTER',
+                    description: 'Monster Lair',
+                    hasTreasure: hasTreasure
+                };
+            }
+            return null;
+        }
+        
+        if (roll >= 8 && roll <= 10) {
+            const currentTraps = this.featureStats.trap || 0;
+            const maxTraps = diffConfig.trapMax;
+            if (currentTraps < maxTraps) {
+                return {
+                    type: 'trap',
+                    icon: '⚠️',
+                    label: 'TRAP',
+                    description: 'Dangerous Trap'
+                };
+            }
+            return null;
+        }
+        
+        if (roll >= 16 && roll <= 17) {
+            return {
+                type: 'puzzle',
+                icon: '🧩',
+                label: 'PUZZLE',
+                description: 'Puzzle Room'
+            };
+        }
+        
+        if (roll >= 2 && roll <= 4) {
+            const currentTreasure = this.featureStats.treasure || 0;
+            const maxTreasure = diffConfig.treasureMax;
+            if (currentTreasure < maxTreasure) {
+                return {
+                    type: 'treasure',
+                    icon: '💰',
+                    label: 'TREASURE',
+                    description: 'Treasure Hoard'
+                };
+            }
+            return null;
+        }
+        
+        return null;
     }
 
-    function scrollToCurrent() {
-        const container = elements.grid.parentElement;
-        const grid = elements.grid;
-        if (!container || !grid || currentMap.size === 0) return;
-
-        // Find the current cell
-        const cells = grid.querySelectorAll('.cell');
-        let currentCell = null;
-        for (const cell of cells) {
-            if (cell.classList.contains('cell-current')) {
-                currentCell = cell;
-                break;
-            }
+    // ============================================
+    // PLACE ROOM
+    // ============================================
+    placeRoom(direction) {
+        if (this.charges <= 0) {
+            return { success: false, message: 'No charges remaining!' };
         }
 
-        if (currentCell) {
-            // Scroll to center the current cell
-            const containerRect = container.getBoundingClientRect();
-            const cellRect = currentCell.getBoundingClientRect();
+        const dir = this.getDirection(direction);
+        const newX = this.currentPos.x + dir.dx;
+        const newY = this.currentPos.y + dir.dy;
+        const key = `${newX},${newY}`;
+
+        const currentKey = `${this.currentPos.x},${this.currentPos.y}`;
+        if (!this.roomDirectionMemory.has(currentKey)) {
+            this.roomDirectionMemory.set(currentKey, new Set());
+        }
+        this.roomDirectionMemory.get(currentKey).add(direction);
+
+        if (this.rooms.has(key)) {
+            this.currentPos = { x: newX, y: newY };
+            this.addHistory('move', { x: newX, y: newY, direction: dir.name });
+            this.charges--;
             
-            const scrollX = cellRect.left - containerRect.left - containerRect.width / 2 + cellRect.width / 2;
-            const scrollY = cellRect.top - containerRect.top - containerRect.height / 2 + cellRect.height / 2;
+            const newKey = `${newX},${newY}`;
+            if (!this.roomDirectionMemory.has(newKey)) {
+                this.roomDirectionMemory.set(newKey, new Set());
+            }
+            const oppositeDir = ((direction + 1) % 4) + 1;
+            this.roomDirectionMemory.get(newKey).add(oppositeDir);
             
-            container.scrollTo({
-                left: container.scrollLeft + scrollX,
-                top: container.scrollTop + scrollY,
-                behavior: 'smooth'
-            });
-        }
-    }
-
-    // ============================================
-    // LOG
-    // ============================================
-    function renderLog() {
-        const logDiv = elements.log;
-        if (logDiv.children.length === 0) {
-            logDiv.innerHTML = '<div class="log-entry info">🎲 Roll D8 to set difficulty!</div>';
-        }
-        logDiv.scrollTop = logDiv.scrollHeight;
-    }
-
-    function addLogEntry(message, className = 'info') {
-        const logDiv = elements.log;
-        const entry = document.createElement('div');
-        entry.className = `log-entry ${className}`;
-        entry.textContent = message;
-        logDiv.appendChild(entry);
-        logDiv.scrollTop = logDiv.scrollHeight;
-        
-        while (logDiv.children.length > 30) {
-            logDiv.removeChild(logDiv.firstChild);
-        }
-    }
-
-    // ============================================
-    // ACTIONS
-    // ============================================
-    function handleD8Roll() {
-        const result = mapGenerator.rollForDifficulty();
-        currentD8Roll = result.roll;
-        const config = result.config;
-        
-        addLogEntry(`🎲 D8 = ${result.roll} → ${config.name} difficulty!`, 'd20-roll');
-        addLogEntry(`📊 ${config.description}`, 'info');
-        addLogEntry(`📊 Max Monsters: ${config.maxMonsters} | Bosses: ${config.bossCount}`, 'info');
-        addLogEntry(`💎 Monsters have ${config.monsterTreasureChance}% chance to drop treasure`, 'info');
-        
-        elements.d8Display.textContent = result.roll;
-        updateUI();
-    }
-
-    function handleD20Roll() {
-        const result = mapGenerator.rollForCharges();
-        currentD20Roll = result.finalRoll;
-        chargesRemaining = result.charges;
-        currentMap = new Map(mapGenerator.rooms);
-        
-        addLogEntry(`🎲 D20: ${result.rolls.join(', ')} → ${result.charges} charges!`, 'd20-roll');
-        addLogEntry(`⭐ START room at (0, 0)`, 'start');
-        
-        elements.d20Display.textContent = result.finalRoll;
-        updateUI();
-    }
-
-    function handleD4Roll() {
-        if (chargesRemaining <= 0) {
-            addLogEntry('⚠️ No charges! Roll D20 again.', 'danger');
-            return;
+            return { 
+                success: true, 
+                message: `Moved to existing room (${dir.emoji} ${dir.name})`,
+                room: this.rooms.get(key),
+                chargesLeft: this.charges,
+                isMove: true,
+                direction: direction
+            };
         }
 
-        const direction = mapGenerator.rollForDirection();
-        currentD4Roll = direction;
+        this.addRoom(newX, newY, 'room', '⬜', '');
+        const room = this.rooms.get(key);
+        this.totalRoomsPlaced++;
         
-        const result = mapGenerator.placeRoom(direction);
+        this.roomDistanceCache.set(key, this.calculateDistance(newX, newY));
         
-        if (result.success) {
-            currentMap = new Map(mapGenerator.rooms);
-            chargesRemaining = result.chargesLeft;
+        const newKey = `${newX},${newY}`;
+        if (!this.roomDirectionMemory.has(newKey)) {
+            this.roomDirectionMemory.set(newKey, new Set());
+        }
+        const oppositeDir = ((direction + 1) % 4) + 1;
+        this.roomDirectionMemory.get(newKey).add(oppositeDir);
+        
+        const feature = this.checkForFeature(newX, newY);
+        let featureMessage = '';
+        let monsterTreasureMessage = '';
+        
+        if (feature) {
+            room.icon = feature.icon;
+            room.label = feature.label;
+            room.featureType = feature.type;
+            room.color = `has-${feature.type}`;
+            room.description = feature.description || feature.type;
             
-            const dir = mapGenerator.getDirection(direction);
-            const directionType = result.isMove ? '↩️ Backup' : '➡️ New';
+            this.featureStats[feature.type] = (this.featureStats[feature.type] || 0) + 1;
+            this.featuresApplied.push({ key, ...feature });
             
-            if (result.feature) {
-                const treasureNote = result.feature.hasTreasure ? ' 💎' : '';
-                addLogEntry(`D4=${direction} ${dir.emoji} ${directionType} → ${result.message}${treasureNote}`, 'feature');
-            } else if (result.isMove) {
-                addLogEntry(`D4=${direction} ${dir.emoji} ${directionType} → ${result.message}`, 'place');
-            } else {
-                addLogEntry(`D4=${direction} ${dir.emoji} ${directionType} → ${result.message}`, 'd4-roll');
+            featureMessage = ` 🎯 ${feature.label}`;
+            
+            if (feature.type === 'monster' && feature.hasTreasure) {
+                this.featureStats.monsterTreasure = (this.featureStats.monsterTreasure || 0) + 1;
+                monsterTreasureMessage = ' 💎 with treasure!';
+                featureMessage += ' 💎';
             }
             
-            elements.direction.textContent = `${dir.emoji} ${dir.name}`;
-            elements.d4Display.textContent = direction;
-            
-            if (chargesRemaining === 0) {
-                addLogEntry('🏁 No more charges! Roll D20 again.', 'info');
+            if (feature.type === 'boss') {
+                const dist = this.roomDistanceCache.get(key);
+                featureMessage += ` (${dist} rooms from start)`;
             }
-            
-            updateUI();
-        } else {
-            addLogEntry(`❌ ${result.message}`, 'danger');
         }
+
+        this.currentPos = { x: newX, y: newY };
+        this.depth++;
+        this.charges--;
+        this.addHistory('place', { 
+            x: newX, 
+            y: newY, 
+            direction: dir.name,
+            feature: feature,
+            directionValue: direction
+        });
+
+        const message = `Placed room (${dir.emoji} ${dir.name})${featureMessage}${monsterTreasureMessage}`;
+
+        return {
+            success: true,
+            message: message,
+            room: room,
+            chargesLeft: this.charges,
+            feature: feature,
+            isMove: false,
+            direction: direction
+        };
     }
 
-    function handlePlaceObjective() {
-        if (mapGenerator.isObjectivePlaced()) {
-            addLogEntry('⚠️ Objective already placed!', 'danger');
-            return;
+    // ============================================
+    // PLACE OBJECTIVE
+    // ============================================
+    placeObjective() {
+        if (this.objectivePlaced) {
+            return { success: false, message: 'Objective already placed!' };
         }
 
-        const result = mapGenerator.placeObjective();
-        if (result.success) {
-            currentMap = new Map(mapGenerator.rooms);
-            addLogEntry(`⭐ ${result.message}`, 'feature');
-            updateUI();
-        } else {
-            addLogEntry(`⚠️ ${result.message}`, 'danger');
-        }
-    }
-
-    function handleBalance() {
-        if (currentMap.size < 4) {
-            addLogEntry('⚠️ Need at least 3 rooms to balance', 'danger');
-            return;
-        }
-
-        const result = mapGenerator.balanceDungeon();
-        if (result.success) {
-            currentMap = new Map(mapGenerator.rooms);
-            addLogEntry(`⚖️ ${result.message}`, 'balance');
-            if (result.objectivePlaced) {
-                addLogEntry(`⭐ Objective auto-placed!`, 'feature');
+        const diffConfig = this.difficultyConfig[this.difficulty];
+        const minDistance = diffConfig.objectiveDistance || 5;
+        
+        let farthestRoom = null;
+        let farthestDist = 0;
+        
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'start' || room.type === 'objective') continue;
+            if (room.featureType) continue;
+            const dist = this.roomDistanceCache.get(key) || 0;
+            if (dist >= minDistance && dist > farthestDist) {
+                farthestDist = dist;
+                farthestRoom = { key, room, distance: dist };
             }
-            updateUI();
-        } else {
-            addLogEntry(`⚠️ ${result.message}`, 'danger');
         }
+
+        if (!farthestRoom) {
+            for (const [key, room] of this.rooms) {
+                if (room.type === 'start' || room.type === 'objective') continue;
+                const dist = this.roomDistanceCache.get(key) || 0;
+                if (dist > farthestDist) {
+                    farthestDist = dist;
+                    farthestRoom = { key, room, distance: dist };
+                }
+            }
+        }
+
+        if (!farthestRoom) {
+            return { success: false, message: 'No valid room for objective!' };
+        }
+
+        const room = farthestRoom.room;
+        room.icon = '⭐';
+        room.label = 'GOAL';
+        room.type = 'objective';
+        room.color = 'has-objective';
+        room.description = 'Adventurer Goal';
+        room.featureType = 'objective';
+        this.objectivePlaced = true;
+        this.objectivePosition = { x: room.x, y: room.y };
+        this.featureStats.objective = 1;
+        
+        this.addHistory('objective', { 
+            x: room.x, 
+            y: room.y, 
+            distance: farthestDist 
+        });
+
+        return {
+            success: true,
+            message: `⭐ Objective placed ${farthestDist} rooms from start!`,
+            position: { x: room.x, y: room.y },
+            distance: farthestDist
+        };
     }
 
-    function handleUndo() {
-        const result = mapGenerator.undo();
-        if (result.success) {
-            currentMap = new Map(mapGenerator.rooms);
-            chargesRemaining = mapGenerator.charges;
-            addLogEntry(`↩️ ${result.message}`, 'info');
-            updateUI();
-        } else {
-            addLogEntry(`❌ ${result.message}`, 'danger');
+    // ============================================
+    // BALANCE DUNGEON - One-time use
+    // ============================================
+    balanceDungeon() {
+        // Check if balance already used
+        if (this.balanceUsed) {
+            return { 
+                success: false, 
+                message: '⚠️ Balance already used! Reset the dungeon to balance again.',
+                alreadyUsed: true
+            };
         }
+
+        const diffConfig = this.difficultyConfig[this.difficulty];
+        const totalRooms = this.rooms.size - 1;
+        if (totalRooms < 5) {
+            return { 
+                success: false, 
+                message: 'Too few rooms to balance (need at least 5)' 
+            };
+        }
+
+        const targetCounts = {
+            treasure: Math.min(
+                Math.max(diffConfig.treasureMin, Math.floor(totalRooms * 0.08)),
+                diffConfig.treasureMax
+            ),
+            trap: Math.min(
+                Math.max(diffConfig.trapMin, Math.floor(totalRooms * 0.12)),
+                diffConfig.trapMax
+            ),
+            monster: Math.min(
+                Math.max(1, Math.floor(totalRooms * 0.15)),
+                diffConfig.maxMonsters
+            ),
+            puzzle: Math.floor(totalRooms * 0.06),
+            boss: diffConfig.bossCount,
+            shop: 0
+        };
+
+        const availableRooms = [];
+        for (const [key, room] of this.rooms) {
+            if (room.type !== 'start' && room.type !== 'objective' && !room.featureType) {
+                const dist = this.roomDistanceCache.get(key) || 0;
+                availableRooms.push({ key, room, distance: dist });
+            }
+        }
+
+        availableRooms.sort((a, b) => b.distance - a.distance);
+
+        let added = 0;
+        const addedFeatures = [];
+        const usedKeys = new Set();
+        
+        const bossTarget = targetCounts.boss || 0;
+        const bossCandidates = availableRooms.filter(r => r.distance >= diffConfig.bossMinDistance);
+        
+        for (let i = 0; i < Math.min(bossTarget, bossCandidates.length); i++) {
+            const candidate = bossCandidates[i];
+            if (!usedKeys.has(candidate.key)) {
+                const room = this.rooms.get(candidate.key);
+                if (room && !room.featureType && room.type !== 'objective') {
+                    room.icon = '👑';
+                    room.label = 'BOSS';
+                    room.featureType = 'boss';
+                    room.color = 'has-boss';
+                    room.description = 'Boss Chamber';
+                    this.featureStats.boss = (this.featureStats.boss || 0) + 1;
+                    added++;
+                    usedKeys.add(candidate.key);
+                    addedFeatures.push({ 
+                        key: candidate.key, 
+                        type: 'boss',
+                        distance: candidate.distance 
+                    });
+                }
+            }
+        }
+
+        const monsterTarget = targetCounts.monster || 0;
+        const currentMonsters = this.featureStats.monster || 0;
+        const monsterNeeded = Math.max(0, monsterTarget - currentMonsters);
+        
+        let monsterPlaced = 0;
+        for (const candidate of availableRooms) {
+            if (monsterPlaced >= monsterNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
+            const room = this.rooms.get(candidate.key);
+            if (room && !room.featureType && room.type !== 'objective') {
+                const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
+                room.icon = hasTreasure ? '👹💎' : '👹';
+                room.label = hasTreasure ? 'MONSTER+' : 'MONSTER';
+                room.featureType = 'monster';
+                room.color = 'has-monster';
+                room.description = 'Monster Lair';
+                room.hasTreasure = hasTreasure;
+                this.featureStats.monster = (this.featureStats.monster || 0) + 1;
+                if (hasTreasure) {
+                    this.featureStats.monsterTreasure = (this.featureStats.monsterTreasure || 0) + 1;
+                }
+                added++;
+                usedKeys.add(candidate.key);
+                addedFeatures.push({ key: candidate.key, type: 'monster', hasTreasure });
+                monsterPlaced++;
+            }
+        }
+
+        const trapTarget = targetCounts.trap || 0;
+        const currentTraps = this.featureStats.trap || 0;
+        const trapNeeded = Math.max(0, trapTarget - currentTraps);
+        
+        let trapPlaced = 0;
+        for (const candidate of availableRooms) {
+            if (trapPlaced >= trapNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
+            const room = this.rooms.get(candidate.key);
+            if (room && !room.featureType && room.type !== 'objective') {
+                room.icon = '⚠️';
+                room.label = 'TRAP';
+                room.featureType = 'trap';
+                room.color = 'has-trap';
+                room.description = 'Dangerous Trap';
+                this.featureStats.trap = (this.featureStats.trap || 0) + 1;
+                added++;
+                usedKeys.add(candidate.key);
+                addedFeatures.push({ key: candidate.key, type: 'trap' });
+                trapPlaced++;
+            }
+        }
+
+        const treasureTarget = targetCounts.treasure || 0;
+        const currentTreasure = this.featureStats.treasure || 0;
+        const treasureNeeded = Math.max(0, treasureTarget - currentTreasure);
+        
+        let treasurePlaced = 0;
+        for (const candidate of availableRooms) {
+            if (treasurePlaced >= treasureNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
+            const room = this.rooms.get(candidate.key);
+            if (room && !room.featureType && room.type !== 'objective') {
+                room.icon = '💰';
+                room.label = 'TREASURE';
+                room.featureType = 'treasure';
+                room.color = 'has-treasure';
+                room.description = 'Treasure Hoard';
+                this.featureStats.treasure = (this.featureStats.treasure || 0) + 1;
+                added++;
+                usedKeys.add(candidate.key);
+                addedFeatures.push({ key: candidate.key, type: 'treasure' });
+                treasurePlaced++;
+            }
+        }
+
+        const puzzleTarget = targetCounts.puzzle || 0;
+        const currentPuzzle = this.featureStats.puzzle || 0;
+        const puzzleNeeded = Math.max(0, puzzleTarget - currentPuzzle);
+        
+        let puzzlePlaced = 0;
+        for (const candidate of availableRooms) {
+            if (puzzlePlaced >= puzzleNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
+            const room = this.rooms.get(candidate.key);
+            if (room && !room.featureType && room.type !== 'objective') {
+                room.icon = '🧩';
+                room.label = 'PUZZLE';
+                room.featureType = 'puzzle';
+                room.color = 'has-puzzle';
+                room.description = 'Puzzle Room';
+                this.featureStats.puzzle = (this.featureStats.puzzle || 0) + 1;
+                added++;
+                usedKeys.add(candidate.key);
+                addedFeatures.push({ key: candidate.key, type: 'puzzle' });
+                puzzlePlaced++;
+            }
+        }
+
+        if (!this.objectivePlaced && this.rooms.size > 5) {
+            this.placeObjective();
+        }
+
+        // Mark balance as used
+        this.balanceUsed = true;
+
+        return {
+            success: true,
+            message: `Balanced ${diffConfig.name} dungeon: added ${added} features`,
+            added: added,
+            addedFeatures: addedFeatures,
+            stats: this.featureStats,
+            targets: targetCounts,
+            difficulty: diffConfig,
+            backupAttempts: this.backupAttempts,
+            newDirectionAttempts: this.newDirectionAttempts,
+            objectivePlaced: this.objectivePlaced,
+            alreadyUsed: false
+        };
     }
 
-    function handleReset() {
-        if (currentMap.size > 1 && !confirm('Reset the dungeon?')) {
-            return;
+    // ============================================
+    // CHECK IF BALANCE USED
+    // ============================================
+    isBalanceUsed() {
+        return this.balanceUsed;
+    }
+
+    // ============================================
+    // GET DUNGEON STATS FOR DISPLAY
+    // ============================================
+    getDungeonStats() {
+        const diffConfig = this.difficultyConfig[this.difficulty];
+        const totalRooms = this.rooms.size;
+        const nonStartRooms = totalRooms - 1;
+        
+        const stats = {
+            difficulty: diffConfig,
+            totalRooms: totalRooms,
+            nonStartRooms: nonStartRooms,
+            depth: this.depth,
+            featureStats: { ...this.featureStats },
+            objectivePlaced: this.objectivePlaced,
+            objectivePosition: this.objectivePosition,
+            roomTypes: {},
+            percentages: {},
+            directionStats: {
+                newDirections: this.newDirectionAttempts,
+                backupDirections: this.backupAttempts,
+                totalMoves: this.newDirectionAttempts + this.backupAttempts
+            },
+            farthestRoom: null,
+            averageDistance: 0,
+            balanceUsed: this.balanceUsed
+        };
+
+        // Calculate room type counts and percentages
+        const typeCounts = {};
+        let totalFeatures = 0;
+        for (const [key, room] of this.rooms) {
+            const type = room.featureType || 'empty';
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
+            if (room.featureType) totalFeatures++;
         }
         
-        mapGenerator.reset();
-        currentMap = new Map(mapGenerator.rooms);
-        currentD20Roll = null;
-        currentD4Roll = null;
-        chargesRemaining = 0;
-        elements.direction.textContent = '-';
-        elements.d4Display.textContent = '-';
-        elements.d20Display.textContent = '-';
-        elements.d8Display.textContent = currentD8Roll;
-        addLogEntry('🔄 Dungeon reset!', 'info');
-        updateUI();
-    }
+        typeCounts.start = 1;
+        stats.roomTypes = typeCounts;
 
-    function handlePrint() {
-        window.print();
-    }
+        for (const [type, count] of Object.entries(typeCounts)) {
+            stats.percentages[type] = ((count / totalRooms) * 100).toFixed(1);
+        }
 
-    // ============================================
-    // TUTORIAL INTEGRATION
-    // ============================================
-    let tutorial = null;
-
-    // Initialize tutorial after everything else is ready
-    function initTutorial() {
-        if (typeof TutorialManager !== 'undefined') {
-            tutorial = new TutorialManager();
-            // Pass app functions to tutorial if needed
-            if (tutorial.setAppFunctions) {
-                tutorial.setAppFunctions({
-                    handleD8Roll,
-                    handleD20Roll,
-                    handleD4Roll,
-                    handlePlaceObjective,
-                    handleBalance,
-                    handleUndo,
-                    handleReset,
-                    handlePrint,
-                    updateUI
-                });
+        let maxDist = 0;
+        let farthestKey = null;
+        for (const [key, room] of this.rooms) {
+            const dist = this.roomDistanceCache.get(key) || 0;
+            if (dist > maxDist) {
+                maxDist = dist;
+                farthestKey = key;
             }
         }
+        if (farthestKey) {
+            const room = this.rooms.get(farthestKey);
+            stats.farthestRoom = {
+                key: farthestKey,
+                ...room,
+                distance: maxDist
+            };
+        }
+
+        let totalDist = 0;
+        let count = 0;
+        for (const [key, room] of this.rooms) {
+            const dist = this.roomDistanceCache.get(key) || 0;
+            totalDist += dist;
+            count++;
+        }
+        stats.averageDistance = count > 0 ? (totalDist / count).toFixed(1) : 0;
+
+        return stats;
     }
 
     // ============================================
-    // EVENT LISTENERS
+    // HELPER FUNCTIONS
     // ============================================
-    elements.rollD8Btn.addEventListener('click', handleD8Roll);
-    elements.rollD20Btn.addEventListener('click', handleD20Roll);
-    elements.rollD4Btn.addEventListener('click', handleD4Roll);
-    elements.balanceBtn.addEventListener('click', handleBalance);
-    elements.placeObjectiveBtn.addEventListener('click', handlePlaceObjective);
-    elements.undoBtn.addEventListener('click', handleUndo);
-    elements.resetBtn.addEventListener('click', handleReset);
-    elements.printBtn.addEventListener('click', handlePrint);
+    getFeatureData(type) {
+        const features = {
+            treasure: { icon: '💰', label: 'TREASURE' },
+            trap: { icon: '⚠️', label: 'TRAP' },
+            monster: { icon: '👹', label: 'MONSTER' },
+            puzzle: { icon: '🧩', label: 'PUZZLE' },
+            shop: { icon: '🏪', label: 'SHOP' },
+            boss: { icon: '👑', label: 'BOSS' },
+            objective: { icon: '⭐', label: 'GOAL' },
+            start: { icon: '🏠', label: 'START' },
+            empty: { icon: '⬜', label: 'EMPTY' }
+        };
+        return features[type] || { icon: '⬜', label: '' };
+    }
 
-    // ============================================
-    // KEYBOARD SHORTCUTS
-    // ============================================
-    document.addEventListener('keydown', (e) => {
-        // Don't handle shortcuts if tutorial is active
-        if (tutorial && tutorial.isActive) {
-            // Let tutorial handle its own shortcuts
-            return;
+    addRoom(x, y, type = 'room', icon = '⬜', label = '') {
+        const key = `${x},${y}`;
+        if (!this.rooms.has(key)) {
+            this.roomCounter++;
+        }
+        this.rooms.set(key, {
+            x,
+            y,
+            type: type,
+            icon: icon,
+            label: label,
+            id: this.roomCounter,
+            placed: true,
+            featureType: null,
+            color: '',
+            description: '',
+            hasTreasure: false
+        });
+    }
+
+    shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    addHistory(action, data) {
+        this.history.push({ action, data, timestamp: Date.now() });
+    }
+
+    undo() {
+        if (this.history.length <= 1) {
+            return { success: false, message: 'Nothing to undo' };
         }
 
-        // Don't handle if typing in an input or textarea
-        const tag = e.target.tagName.toLowerCase();
-        if (tag === 'input' || tag === 'textarea') return;
-
-        // D8 - Difficulty
-        if (e.key === '8' && !e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            elements.rollD8Btn.click();
-            return;
-        }
-
-        // Enter - Roll D20 or D4
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (!elements.rollD4Btn.disabled) {
-                elements.rollD4Btn.click();
-            } else if (!elements.rollD20Btn.disabled) {
-                elements.rollD20Btn.click();
+        const lastAction = this.history.pop();
+        
+        if (lastAction.action === 'place') {
+            const key = `${lastAction.data.x},${lastAction.data.y}`;
+            const room = this.rooms.get(key);
+            if (room && room.type !== 'start' && room.type !== 'objective') {
+                if (room.featureType) {
+                    this.featureStats[room.featureType] = Math.max(0, (this.featureStats[room.featureType] || 1) - 1);
+                    if (room.hasTreasure) {
+                        this.featureStats.monsterTreasure = Math.max(0, (this.featureStats.monsterTreasure || 1) - 1);
+                    }
+                    this.featuresApplied = this.featuresApplied.filter(f => f.key !== key);
+                }
+                this.rooms.delete(key);
+                this.roomDistanceCache.delete(key);
+                this.roomDirectionMemory.delete(key);
+                const prev = this.history[this.history.length - 1];
+                if (prev) {
+                    this.currentPos = { x: prev.data.x || 0, y: prev.data.y || 0 };
+                }
+                this.charges++;
+                return { 
+                    success: true, 
+                    message: 'Undid room placement',
+                    roomRemoved: room
+                };
             }
-            return;
         }
-
-        // G - Place Goal
-        if (e.key === 'g' || e.key === 'G') {
-            if (!e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                elements.placeObjectiveBtn.click();
+        
+        if (lastAction.action === 'move') {
+            const prev = this.history[this.history.length - 1];
+            if (prev) {
+                this.currentPos = { x: prev.data.x || 0, y: prev.data.y || 0 };
+                this.charges++;
+                return { 
+                    success: true, 
+                    message: 'Undid movement',
+                    chargesLeft: this.charges
+                };
             }
-            return;
         }
 
-        // B - Balance
-        if (e.key === 'b' || e.key === 'B') {
-            if (!e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                elements.balanceBtn.click();
+        this.history.push(lastAction);
+        return { success: false, message: 'Could not undo this action' };
+    }
+
+    // ============================================
+    // GETTERS
+    // ============================================
+    getStartRoom() {
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'start') {
+                return { key, ...room };
             }
-            return;
         }
+        return null;
+    }
 
-        // Ctrl+Z - Undo
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-            e.preventDefault();
-            elements.undoBtn.click();
-            return;
-        }
-
-        // R - Reset
-        if (e.key === 'r' || e.key === 'R') {
-            if (!e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                elements.resetBtn.click();
+    getObjectiveRoom() {
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'objective') {
+                return { key, ...room };
             }
-            return;
         }
+        return null;
+    }
 
-        // Ctrl+P - Print (let browser handle)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-            // Let browser handle print
-            return;
-        }
+    getFeatureStats() {
+        return this.featureStats;
+    }
 
-        // T - Tutorial
-        if (e.key === 't' || e.key === 'T') {
-            if (!e.ctrlKey && !e.metaKey && tutorial) {
-                e.preventDefault();
-                tutorial.start();
-            }
-            return;
-        }
-    });
+    getFeaturesApplied() {
+        return this.featuresApplied;
+    }
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    addLogEntry('🎲 Welcome to the Dungeon Cartographer!', 'info');
-    addLogEntry('📖 Press "8" → Set difficulty', 'info');
-    addLogEntry('📖 Then D20 → get charges → D4 → place rooms', 'info');
-    addLogEntry('🎯 70% new directions, 30% backup', 'info');
-    addLogEntry('⭐ Press "G" to place the Goal', 'info');
-    addLogEntry('⚖️ Press "B" to balance', 'info');
-    addLogEntry('❓ Press "T" for tutorial', 'info');
-    addLogEntry('💡 8=D8 | Enter=Roll | G=Goal | B=Balance | Ctrl+Z=Undo | R=Reset', 'info');
-    
-    // Set initial difficulty
-    const initialDiff = mapGenerator.setDifficulty(3);
-    currentD8Roll = 3;
-    elements.d8Display.textContent = '3';
-    elements.difficultyDisplay.textContent = initialDiff.name;
-    elements.difficultyDisplay.style.color = initialDiff.color;
-    elements.difficultyDetail.textContent = initialDiff.description;
-    
-    currentMap = new Map(mapGenerator.rooms);
-    updateUI();
+    getRoomDistance(key) {
+        return this.roomDistanceCache.get(key) || 0;
+    }
 
-    // Initialize tutorial after a short delay to ensure everything is loaded
-    setTimeout(initTutorial, 100);
+    isObjectivePlaced() {
+        return this.objectivePlaced;
+    }
 
-    // ============================================
-    // WINDOW RESIZE HANDLER
-    // ============================================
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            renderGrid();
-        }, 200);
-    });
-
-    // ============================================
-    // MUTATION OBSERVER FOR SCROLLING
-    // ============================================
-    const observer = new MutationObserver(() => {
-        scrollToCurrent();
-    });
-    observer.observe(elements.grid, { childList: true, subtree: true });
-
-    // ============================================
-    // EXPOSE FUNCTIONS FOR TUTORIAL
-    // ============================================
-    window.appFunctions = {
-        handleD8Roll,
-        handleD20Roll,
-        handleD4Roll,
-        handlePlaceObjective,
-        handleBalance,
-        handleUndo,
-        handleReset,
-        handlePrint,
-        updateUI,
-        addLogEntry
-    };
-});
+    exportMapData() {
+        return {
+            rooms: Array.from(this.rooms.entries()).map(([key, room]) => ({ 
+                key, 
+                ...room,
+                distanceFromStart: this.roomDistanceCache.get(key) || 0
+            })),
+            totalRooms: this.rooms.size,
+            depth: this.depth,
+            charges: this.charges,
+            d20Rolls: this.d20Rolls,
+            d4Rolls: this.d4Rolls,
+            d8Roll: this.d8Roll,
+            difficulty: this.difficultyConfig[this.difficulty],
+            currentPos: this.currentPos,
+            startRoom: this.getStartRoom(),
+            objectiveRoom: this.getObjectiveRoom(),
+            features: this.featuresApplied,
+            featureStats: this.featureStats,
+            objectivePlaced: this.objectivePlaced,
+            balanceUsed: this.balanceUsed,
+            directionStats: {
+                backupAttempts: this.backupAttempts,
+                newDirectionAttempts: this.newDirectionAttempts
+            },
+            dungeonStats: this.getDungeonStats()
+        };
+    }
+}

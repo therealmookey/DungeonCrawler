@@ -88,7 +88,7 @@
                         <button id="rollD8Btn" class="btn btn-primary btn-small" data-tutorial="d8-btn" title="Roll D8 - Set Difficulty">🎲 D8</button>
                         <button id="rollD20Btn" class="btn btn-secondary btn-small" data-tutorial="d20-btn" title="Roll D20 - Get Charges">🎲 D20</button>
                         <button id="rollD4Btn" class="btn btn-info btn-small" data-tutorial="d4-btn" disabled title="Roll D4 - Place Room">🎲 D4</button>
-                        <button id="balanceBtn" class="btn btn-warning btn-small" data-tutorial="balance-btn" title="Balance Features">⚖️</button>
+                        <button id="balanceBtn" class="btn btn-warning btn-small" data-tutorial="balance-btn" title="Balance Features (once per dungeon)">⚖️</button>
                         <button id="placeObjectiveBtn" class="btn btn-gold btn-small" data-tutorial="objective-btn" title="Place Goal">⭐</button>
                         <button id="undoBtn" class="btn btn-danger btn-small" data-tutorial="undo-btn" title="Undo">↩️</button>
                         <button id="resetBtn" class="btn btn-danger btn-small" data-tutorial="reset-btn" title="Reset">🔄</button>
@@ -104,35 +104,33 @@
                 </div>
 
                 <!-- Keyboard Shortcuts -->
-<div class="stats-section shortcuts-section">
-    <h3>⌨️ Shortcuts</h3>
-    <div class="shortcuts-grid">
-        <span class="shortcut-item"><kbd>8</kbd> <span class="shortcut-label">D8</span></span>
-        <span class="shortcut-item"><kbd>Enter</kbd> <span class="shortcut-label">Roll</span></span>
-        <span class="shortcut-item"><kbd>G</kbd> <span class="shortcut-label">Goal</span></span>
-        <span class="shortcut-item"><kbd>B</kbd> <span class="shortcut-label">Balance</span></span>
-        <span class="shortcut-item"><kbd>Ctrl+Z</kbd> <span class="shortcut-label">Undo</span></span>
-        <span class="shortcut-item"><kbd>R</kbd> <span class="shortcut-label">Reset</span></span>
-        <span class="shortcut-item"><kbd>T</kbd> <span class="shortcut-label">Tutorial</span></span>
-    </div>
-</div>
+                <div class="stats-section shortcuts-section">
+                    <h3>⌨️ Shortcuts</h3>
+                    <div class="shortcuts-grid">
+                        <span class="shortcut-item"><kbd>8</kbd> <span class="shortcut-label">D8</span></span>
+                        <span class="shortcut-item"><kbd>Enter</kbd> <span class="shortcut-label">Roll</span></span>
+                        <span class="shortcut-item"><kbd>G</kbd> <span class="shortcut-label">Goal</span></span>
+                        <span class="shortcut-item"><kbd>B</kbd> <span class="shortcut-label">Balance</span></span>
+                        <span class="shortcut-item"><kbd>Ctrl+Z</kbd> <span class="shortcut-label">Undo</span></span>
+                        <span class="shortcut-item"><kbd>R</kbd> <span class="shortcut-label">Reset</span></span>
+                        <span class="shortcut-item"><kbd>T</kbd> <span class="shortcut-label">Tutorial</span></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Tutorial Overlay -->
-<div id="tutorial-overlay">
-    <div id="tutorial-content">
-        <h2>📖 Welcome to Dungeon Cartographer!</h2>
-        <p>Let's take a quick tour of how to build your dungeon.</p>
-        <div class="tutorial-buttons">
-            <button id="tutorialNextBtn" class="btn btn-primary">Start Tutorial →</button>
-            <button id="tutorialSkipBtn" class="btn btn-secondary">Skip</button>
+    <div id="tutorial-overlay">
+        <div id="tutorial-content">
+            <h2>📖 Welcome to Dungeon Cartographer!</h2>
+            <p>Let's take a quick tour of how to build your dungeon.</p>
+            <div class="tutorial-buttons">
+                <button id="tutorialNextBtn" class="btn btn-primary">Start Tutorial →</button>
+                <button id="tutorialSkipBtn" class="btn btn-secondary">Skip</button>
+            </div>
         </div>
     </div>
-</div>
-
-<div id="tutorial-tooltip"></div>
 
     <div id="tutorial-tooltip"></div>
 

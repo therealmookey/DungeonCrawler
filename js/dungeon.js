@@ -1,5 +1,6 @@
 /**
- * Dungeon Cartographer - Complete with Stats
+ * Dungeon Cartographer - Core Generator
+ * With Balance Lock (one-time use)
  */
 
 class DungeonMapGenerator {
@@ -139,6 +140,7 @@ class DungeonMapGenerator {
         this.roomDirectionMemory = new Map();
         this.objectivePlaced = false;
         this.objectivePosition = null;
+        this.balanceUsed = false;
         this.reset();
     }
 
@@ -158,6 +160,7 @@ class DungeonMapGenerator {
         this.roomDirectionMemory = new Map();
         this.objectivePlaced = false;
         this.objectivePosition = null;
+        this.balanceUsed = false;
         this.featureStats = {
             treasure: 0,
             trap: 0,
@@ -617,9 +620,18 @@ class DungeonMapGenerator {
     }
 
     // ============================================
-    // BALANCE DUNGEON
+    // BALANCE DUNGEON - One-time use
     // ============================================
     balanceDungeon() {
+        // Check if balance already used
+        if (this.balanceUsed) {
+            return { 
+                success: false, 
+                message: '⚠️ Balance already used! Reset the dungeon to balance again.',
+                alreadyUsed: true
+            };
+        }
+
         const diffConfig = this.difficultyConfig[this.difficulty];
         const totalRooms = this.rooms.size - 1;
         if (totalRooms < 5) {
@@ -787,6 +799,9 @@ class DungeonMapGenerator {
             this.placeObjective();
         }
 
+        // Mark balance as used
+        this.balanceUsed = true;
+
         return {
             success: true,
             message: `Balanced ${diffConfig.name} dungeon: added ${added} features`,
@@ -798,8 +813,15 @@ class DungeonMapGenerator {
             backupAttempts: this.backupAttempts,
             newDirectionAttempts: this.newDirectionAttempts,
             objectivePlaced: this.objectivePlaced,
-            totalRooms: this.rooms.size
+            alreadyUsed: false
         };
+    }
+
+    // ============================================
+    // CHECK IF BALANCE USED
+    // ============================================
+    isBalanceUsed() {
+        return this.balanceUsed;
     }
 
     // ============================================
@@ -826,7 +848,8 @@ class DungeonMapGenerator {
                 totalMoves: this.newDirectionAttempts + this.backupAttempts
             },
             farthestRoom: null,
-            averageDistance: 0
+            averageDistance: 0,
+            balanceUsed: this.balanceUsed
         };
 
         // Calculate room type counts and percentages
@@ -838,16 +861,13 @@ class DungeonMapGenerator {
             if (room.featureType) totalFeatures++;
         }
         
-        // Add start room to counts
         typeCounts.start = 1;
         stats.roomTypes = typeCounts;
 
-        // Calculate percentages
         for (const [type, count] of Object.entries(typeCounts)) {
             stats.percentages[type] = ((count / totalRooms) * 100).toFixed(1);
         }
 
-        // Find farthest room
         let maxDist = 0;
         let farthestKey = null;
         for (const [key, room] of this.rooms) {
@@ -866,7 +886,6 @@ class DungeonMapGenerator {
             };
         }
 
-        // Calculate average distance
         let totalDist = 0;
         let count = 0;
         for (const [key, room] of this.rooms) {
@@ -1038,6 +1057,7 @@ class DungeonMapGenerator {
             features: this.featuresApplied,
             featureStats: this.featureStats,
             objectivePlaced: this.objectivePlaced,
+            balanceUsed: this.balanceUsed,
             directionStats: {
                 backupAttempts: this.backupAttempts,
                 newDirectionAttempts: this.newDirectionAttempts

@@ -10,17 +10,14 @@ class TutorialManager {
         this.isActive = false;
         this.stepCallbacks = {};
         
-        // Define tutorial steps
         this.defineSteps();
         
-        // Setup DOM references
         this.overlay = document.getElementById('tutorial-overlay');
         this.tooltip = document.getElementById('tutorial-tooltip');
         this.nextBtn = document.getElementById('tutorialNextBtn');
         this.skipBtn = document.getElementById('tutorialSkipBtn');
         this.tutorialBtn = document.getElementById('tutorialBtn');
         
-        // Bind events
         this.bindEvents();
     }
 
@@ -106,14 +103,14 @@ class TutorialManager {
             },
             {
                 id: 'balance',
-                title: '⚖️ Balance Your Dungeon',
-                description: 'Press <kbd>B</kbd> or click <strong>⚖️</strong> to balance your dungeon.<br><br>This ensures the right number of monsters, traps, and treasures based on your difficulty setting.',
+                title: '⚖️ Balance Your Dungeon (Once!)',
+                description: 'Press <kbd>B</kbd> or click <strong>⚖️</strong> to balance your dungeon.<br><br>This ensures the right number of monsters, traps, and treasures based on your difficulty setting.<br><br><strong>⚠️ Balance can only be used once per dungeon!</strong>',
                 highlight: '#balanceBtn',
                 nextText: 'Next →',
                 skipable: true,
                 onEnter: () => {
                     this.highlightElement('#balanceBtn');
-                    this.showTooltip('#balanceBtn', '⚖️ Balance', 'Press <kbd>B</kbd> or click to balance dungeon features.', 'B');
+                    this.showTooltip('#balanceBtn', '⚖️ Balance (Once!)', 'Press <kbd>B</kbd> or click to balance dungeon features.<br><br>⚠️ Can only be used once per dungeon!', 'B');
                     this.updateProgress();
                 }
             },
@@ -161,26 +158,21 @@ class TutorialManager {
     }
 
     bindEvents() {
-        // Tutorial button
         this.tutorialBtn.addEventListener('click', () => {
             this.start();
         });
 
-        // Next button
         this.nextBtn.addEventListener('click', () => {
             this.next();
         });
 
-        // Skip button
         this.skipBtn.addEventListener('click', () => {
             this.skip();
         });
 
-        // Keyboard shortcuts for tutorial
         document.addEventListener('keydown', (e) => {
             if (!this.isActive) return;
             
-            // Space or Enter to advance
             if (e.key === ' ' || e.key === 'Space' || e.key === 'Enter') {
                 e.preventDefault();
                 this.next();
@@ -191,7 +183,6 @@ class TutorialManager {
             }
         });
 
-        // Click outside to skip (on overlay background)
         this.overlay.addEventListener('click', (e) => {
             if (e.target === this.overlay && this.steps[this.currentStep]?.skipable) {
                 this.skip();
@@ -222,7 +213,6 @@ class TutorialManager {
         const step = this.steps[index];
         if (!step) return;
 
-        // Show overlay for intro/complete steps
         if (step.id === 'intro' || step.id === 'complete') {
             this.showOverlay(true);
             this.hideTooltip();
@@ -231,7 +221,6 @@ class TutorialManager {
             this.showOverlay(false);
         }
 
-        // Update overlay content
         if (step.id === 'intro' || step.id === 'complete') {
             document.querySelector('#tutorial-content h2').innerHTML = step.title;
             document.querySelector('#tutorial-content p').innerHTML = step.description;
@@ -240,12 +229,10 @@ class TutorialManager {
             this.updateProgressIndicator();
         }
 
-        // Call onEnter
         if (step.onEnter) {
             step.onEnter();
         }
 
-        // Store current step ID for reference
         this.currentStepId = step.id;
     }
 
@@ -264,18 +251,15 @@ class TutorialManager {
         const content = document.querySelector('#tutorial-content');
         if (!content) return;
 
-        // Remove existing progress indicator
         const existing = content.querySelector('.tutorial-progress');
         if (existing) existing.remove();
 
-        // Create progress indicator
         const progress = document.createElement('div');
         progress.className = 'tutorial-progress';
         
         const total = this.steps.length;
         const current = this.currentStep + 1;
         
-        // Show step indicator
         progress.innerHTML = `
             <span class="tutorial-step-indicator">Step ${current} of ${total}</span>
             <span class="tutorial-next-indicator">
@@ -283,12 +267,10 @@ class TutorialManager {
             </span>
         `;
         
-        // Insert before the button container
         const btnContainer = content.querySelector('.tutorial-buttons');
         if (btnContainer) {
             content.insertBefore(progress, btnContainer);
         } else {
-            // If buttons container doesn't exist, add after description
             const desc = content.querySelector('p');
             if (desc) {
                 desc.after(progress);
@@ -308,23 +290,19 @@ class TutorialManager {
         const rect = element.getBoundingClientRect();
         const tooltip = this.tooltip;
         
-        // Position tooltip below or above the element
         let top = rect.bottom + 12;
         let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
         
-        // If tooltip would go off screen, position above
         if (top + 200 > window.innerHeight) {
             top = rect.top - 200;
         }
         
-        // Keep tooltip in viewport horizontally
         if (left < 10) left = 10;
         if (left + 350 > window.innerWidth) left = window.innerWidth - 360;
         
         tooltip.style.top = top + 'px';
         tooltip.style.left = left + 'px';
         
-        // Set content
         tooltip.innerHTML = `
             <div class="tooltip-title">${title}</div>
             <div class="tooltip-desc">${description}</div>
@@ -344,7 +322,6 @@ class TutorialManager {
         const element = document.querySelector(selector);
         if (element) {
             element.classList.add('tutorial-highlight');
-            // Also scroll to element if needed
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
@@ -368,7 +345,6 @@ class TutorialManager {
     }
 }
 
-// Initialize tutorial when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.tutorial = new TutorialManager();
 });
