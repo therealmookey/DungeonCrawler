@@ -13,12 +13,7 @@
         </header>
 
         <div id="main-area">
-            <!-- Map Container - Left Side -->
-            <div id="map-container">
-                <div id="dungeon-grid"></div>
-            </div>
-
-            <!-- Stats Panel - Right Side -->
+            <!-- Stats Panel - Left Side -->
             <div id="stats-panel">
                 <div class="stats-section">
                     <h3>⚔️ Difficulty</h3>
@@ -42,8 +37,21 @@
                     </div>
                 </div>
 
+                <div class="stats-section log-section">
+                    <h3>📜 Log</h3>
+                    <div id="log"></div>
+                </div>
+            </div>
+
+            <!-- Map Container - Center -->
+            <div id="map-container">
+                <div id="dungeon-grid"></div>
+            </div>
+
+            <!-- Dice & Controls Panel - Right Side -->
+            <div id="dice-panel">
                 <div class="stats-section">
-                    <h3>🎲 Dice & Charges</h3>
+                    <h3>🎲 Dice</h3>
                     <div class="dice-grid">
                         <div class="dice-item">
                             <span class="dice-label">🎲 D8</span>
@@ -74,19 +82,24 @@
                 </div>
 
                 <div class="stats-section controls-section">
-                    <button id="rollD8Btn" class="btn btn-primary btn-small">🎲 D8</button>
-                    <button id="rollD20Btn" class="btn btn-secondary btn-small">🎲 D20</button>
-                    <button id="rollD4Btn" class="btn btn-info btn-small" disabled>🎲 D4</button>
-                    <button id="balanceBtn" class="btn btn-warning btn-small">⚖️</button>
-                    <button id="placeObjectiveBtn" class="btn btn-gold btn-small">⭐</button>
-                    <button id="undoBtn" class="btn btn-danger btn-small">↩️</button>
-                    <button id="resetBtn" class="btn btn-danger btn-small">🔄</button>
-                    <button id="printBtn" class="btn btn-success btn-small">🖨️</button>
+                    <h3>🎮 Controls</h3>
+                    <div class="button-grid">
+                        <button id="rollD8Btn" class="btn btn-primary btn-small" title="Roll D8 - Set Difficulty">🎲 D8</button>
+                        <button id="rollD20Btn" class="btn btn-secondary btn-small" title="Roll D20 - Get Charges">🎲 D20</button>
+                        <button id="rollD4Btn" class="btn btn-info btn-small" disabled title="Roll D4 - Place Room">🎲 D4</button>
+                        <button id="balanceBtn" class="btn btn-warning btn-small" title="Balance Features">⚖️</button>
+                        <button id="placeObjectiveBtn" class="btn btn-gold btn-small" title="Place Goal">⭐</button>
+                        <button id="undoBtn" class="btn btn-danger btn-small" title="Undo">↩️</button>
+                        <button id="resetBtn" class="btn btn-danger btn-small" title="Reset">🔄</button>
+                        <button id="printBtn" class="btn btn-success btn-small" title="Print">🖨️</button>
+                    </div>
                 </div>
 
-                <div class="stats-section log-section">
-                    <h3>📜 Log</h3>
-                    <div id="log"></div>
+                <div class="stats-section feature-stats-section">
+                    <h3>🎯 Features</h3>
+                    <div class="feature-stats" id="featureStats">
+                        <span style="color: #666;">No features yet</span>
+                    </div>
                 </div>
             </div>
         </div>
