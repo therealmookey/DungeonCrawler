@@ -1,28 +1,27 @@
 /**
  * Dungeon Cartographer - App Controller
- * With D8 Difficulty System
+ * With Smart Direction System
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const mapGenerator = new DungeonMapGenerator();
     let currentMap = new Map();
 
-    // DOM Elements
     const elements = {
+        rollD8Btn: document.getElementById('rollD8Btn'),
         rollD20Btn: document.getElementById('rollD20Btn'),
         rollD4Btn: document.getElementById('rollD4Btn'),
-        rollD8Btn: document.getElementById('rollD8Btn'),
         balanceBtn: document.getElementById('balanceBtn'),
         resetBtn: document.getElementById('resetBtn'),
         undoBtn: document.getElementById('undoBtn'),
         printBtn: document.getElementById('printBtn'),
+        d8Display: document.getElementById('d8Display'),
         d20Display: document.getElementById('d20Display'),
         d4Display: document.getElementById('d4Display'),
-        d8Display: document.getElementById('d8Display'),
         chargesDisplay: document.getElementById('chargesDisplay'),
+        d8Status: document.getElementById('d8Status'),
         d20Status: document.getElementById('d20Status'),
         d4Status: document.getElementById('d4Status'),
-        d8Status: document.getElementById('d8Status'),
         chargesStatus: document.getElementById('chargesStatus'),
         difficultyDisplay: document.getElementById('difficultyDisplay'),
         roomCount: document.getElementById('roomCount'),
@@ -37,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentD4Roll = null;
     let currentD8Roll = 3;
     let chargesRemaining = 0;
+    let lastDirection = 0;
 
     function updateUI() {
         elements.roomCount.textContent = currentMap.size;
@@ -51,11 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.d8Display.textContent = currentD8Roll;
         elements.chargesDisplay.textContent = chargesRemaining;
 
-        // Update difficulty display
         const diff = mapGenerator.getCurrentDifficulty();
-        const diffName = diff ? diff.name : 'Normal';
-        elements.difficultyDisplay.textContent = diffName;
-        elements.difficultyDisplay.style.color = diff ? diff.color : '#ffff44';
+        elements.difficultyDisplay.textContent = diff.name;
+        elements.difficultyDisplay.style.color = diff.color;
 
         updateFeatureStats();
 
@@ -100,21 +98,26 @@ document.addEventListener('DOMContentLoaded', () => {
             monster: '👹',
             puzzle: '🧩',
             shop: '🏪',
-            boss: '👑'
+            boss: '👑',
+            monsterTreasure: '💎'
         };
 
         let html = '';
         let totalFeatures = 0;
         for (const [type, count] of Object.entries(stats)) {
-            if (count > 0) {
+            if (count > 0 && type !== 'monsterTreasure') {
                 totalFeatures += count;
-                html += `<span class="feature-stat">
-                            ${featureIcons[type] || '📦'} ${count}
-                        </span>`;
+                const icon = featureIcons[type] || '📦';
+                html += `<span class="feature-stat">${icon} ${count}</span>`;
             }
         }
         
-        if (totalFeatures === 0) {
+        // Show monster treasure separately
+        if (stats.monsterTreasure > 0) {
+            html += `<span class="feature-stat" style="border-color: #ffd700;">💎 ${stats.monsterTreasure}</span>`;
+        }
+        
+        if (totalFeatures === 0 && stats.monsterTreasure === 0) {
             html = '<span style="color: #666;">No features yet</span>';
         } else {
             html = `<span style="color: #888; margin-right: 8px;">🎯 Features:</span> ${html}`;
@@ -192,6 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (room.featureType) {
                         tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
+                        if (room.hasTreasure) {
+                            tooltip += ' 💎 (has treasure)';
+                        }
                         const dist = mapGenerator.getRoomDistance(key);
                         tooltip += `\n📍 ${dist} rooms from start`;
                     }
@@ -220,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logDiv.appendChild(entry);
         logDiv.scrollTop = logDiv.scrollHeight;
         
-        while (logDiv.children.length > 25) {
+        while (logDiv.children.length > 30) {
             logDiv.removeChild(logDiv.firstChild);
         }
     }
@@ -233,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addLogEntry(`🎲 D8 = ${result.roll} → ${config.name} difficulty!`, 'd20-roll');
         addLogEntry(`📊 Max Monsters: ${config.maxMonsters} | Bosses: ${config.bossCount} | Traps: ${config.trapMin}-${config.trapMax}`, 'info');
         addLogEntry(`📍 Bosses must be at least ${config.bossMinDistance} rooms from start`, 'info');
+        addLogEntry(`💎 Monsters have ${config.monsterTreasureChance}% chance to drop treasure`, 'info');
         
         elements.d8Display.textContent = result.roll;
         updateUI();
@@ -257,27 +264,33 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const d4 = mapGenerator.rollDice(4);
-        currentD4Roll = d4;
+        // Use smart direction system
+        const direction = mapGenerator.rollForDirection();
+        currentD4Roll = direction;
+        lastDirection = direction;
         
-        const result = mapGenerator.placeRoom(d4);
+        const result = mapGenerator.placeRoom(direction);
         
         if (result.success) {
             currentMap = new Map(mapGenerator.rooms);
             chargesRemaining = result.chargesLeft;
             
-            const dir = mapGenerator.getDirection(d4);
+            const dir = mapGenerator.getDirection(direction);
+            
+            // Show direction type in log
+            const directionType = result.isMove ? '↩️ Backup' : '➡️ New';
             
             if (result.feature) {
-                addLogEntry(`🎲 D4 = ${d4} (${dir.emoji}) → ${result.message}`, 'feature');
+                const treasureNote = result.feature.hasTreasure ? ' 💎' : '';
+                addLogEntry(`🎲 D4 = ${direction} (${dir.emoji}) ${directionType} → ${result.message}${treasureNote}`, 'feature');
             } else if (result.isMove) {
-                addLogEntry(`🎲 D4 = ${d4} (${dir.emoji}) → ${result.message}`, 'place');
+                addLogEntry(`🎲 D4 = ${direction} (${dir.emoji}) ${directionType} → ${result.message}`, 'place');
             } else {
-                addLogEntry(`🎲 D4 = ${d4} (${dir.emoji}) → ${result.message}`, 'd4-roll');
+                addLogEntry(`🎲 D4 = ${direction} (${dir.emoji}) ${directionType} → ${result.message}`, 'd4-roll');
             }
             
             elements.direction.textContent = `${dir.emoji} ${dir.name}`;
-            elements.d4Display.textContent = d4;
+            elements.d4Display.textContent = direction;
             
             if (chargesRemaining === 0) {
                 addLogEntry('🏁 No more charges! Roll D20 again.', 'info');
@@ -302,12 +315,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.addedFeatures && result.addedFeatures.length > 0) {
                 const featureCounts = {};
                 result.addedFeatures.forEach(f => {
-                    featureCounts[f.type] = (featureCounts[f.type] || 0) + 1;
+                    const key = f.hasTreasure ? `${f.type}+treasure` : f.type;
+                    featureCounts[key] = (featureCounts[key] || 0) + 1;
                 });
                 for (const [type, count] of Object.entries(featureCounts)) {
-                    addLogEntry(`   ➕ Added ${count} ${type.toUpperCase()}${type === 'boss' ? ' (far from start)' : ''}`, 'feature');
+                    if (type.includes('treasure')) {
+                        addLogEntry(`   ➕ Added ${count} monster${count > 1 ? 's' : ''} with 💎 treasure`, 'feature');
+                    } else {
+                        addLogEntry(`   ➕ Added ${count} ${type.toUpperCase()}${type === 'boss' ? ' (far from start)' : ''}`, 'feature');
+                    }
                 }
             }
+            // Show direction stats
+            const stats = result.difficulty;
+            addLogEntry(`📊 Direction stats: ${result.newDirectionAttempts || 0} new, ${result.backupAttempts || 0} backup`, 'info');
             updateUI();
         } else {
             addLogEntry(`⚠️ ${result.message}`, 'danger');
@@ -404,7 +425,8 @@ document.addEventListener('DOMContentLoaded', () => {
     addLogEntry('📖 Press "8" or click "Roll D8" to set difficulty!', 'info');
     addLogEntry('⭐ START room at (0, 0) - Always visible!', 'start');
     addLogEntry('📖 Then roll D20 → get charges → roll D4 → place rooms', 'info');
-    addLogEntry('🎯 Features appear based on difficulty level!', 'info');
+    addLogEntry('🎯 70% chance to explore new directions, 30% to backup', 'info');
+    addLogEntry('💎 Monsters have a chance to drop treasure!', 'info');
     addLogEntry('⚖️ Press "Balance" or "B" to balance features', 'info');
     addLogEntry('💡 8 = Difficulty | Enter = Roll | Ctrl+Z = Undo | R = Reset', 'info');
     
