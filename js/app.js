@@ -1,12 +1,13 @@
 /**
  * Dungeon Cartographer - App Controller
- * Side Stats Layout with Better Scrolling
+ * Three Column Layout with Tutorial System
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const mapGenerator = new DungeonMapGenerator();
     let currentMap = new Map();
 
+    // DOM Elements
     const elements = {
         rollD8Btn: document.getElementById('rollD8Btn'),
         rollD20Btn: document.getElementById('rollD20Btn'),
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetBtn: document.getElementById('resetBtn'),
         undoBtn: document.getElementById('undoBtn'),
         printBtn: document.getElementById('printBtn'),
+        tutorialBtn: document.getElementById('tutorialBtn'),
         d8Display: document.getElementById('d8Display'),
         d20Display: document.getElementById('d20Display'),
         d4Display: document.getElementById('d4Display'),
@@ -28,9 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
         grid: document.getElementById('dungeon-grid'),
         log: document.getElementById('log'),
         statsContent: document.getElementById('statsContent'),
-        roomTypesContent: document.getElementById('roomTypesContent')
+        roomTypesContent: document.getElementById('roomTypesContent'),
+        featureStats: document.getElementById('featureStats')
     };
 
+    // State
     let currentD20Roll = null;
     let currentD4Roll = null;
     let currentD8Roll = 3;
@@ -65,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update stats
         updateDungeonStats();
         updateRoomTypes();
+        updateFeatureStats();
 
         renderGrid();
         renderLog();
@@ -205,6 +210,49 @@ document.addEventListener('DOMContentLoaded', () => {
         typesDiv.innerHTML = html || '<span style="color: #666;">No rooms yet</span>';
     }
 
+    function updateFeatureStats() {
+        const stats = mapGenerator.getFeatureStats();
+        const statDiv = elements.featureStats;
+        if (!statDiv) return;
+
+        const featureIcons = {
+            treasure: '💰',
+            trap: '⚠️',
+            monster: '👹',
+            puzzle: '🧩',
+            shop: '🏪',
+            boss: '👑',
+            monsterTreasure: '💎',
+            objective: '⭐'
+        };
+
+        let html = '';
+        let totalFeatures = 0;
+        for (const [type, count] of Object.entries(stats)) {
+            if (count > 0 && type !== 'monsterTreasure') {
+                totalFeatures += count;
+                const icon = featureIcons[type] || '📦';
+                html += `<span class="feature-stat">${icon} ${count}</span>`;
+            }
+        }
+        
+        if (stats.monsterTreasure > 0) {
+            html += `<span class="feature-stat" style="border-color: #ffd700;">💎 ${stats.monsterTreasure}</span>`;
+        }
+        
+        if (stats.objective > 0) {
+            html += `<span class="feature-stat" style="border-color: #ffd700; animation: pulse-objective 2s infinite;">⭐ ${stats.objective}</span>`;
+        }
+        
+        if (totalFeatures === 0 && stats.monsterTreasure === 0 && stats.objective === 0) {
+            html = '<span style="color: #666;">No features yet</span>';
+        } else {
+            html = `<span style="color: #888; margin-right: 8px;">🎯 Features:</span> ${html}`;
+        }
+        
+        statDiv.innerHTML = html;
+    }
+
     // ============================================
     // RENDER GRID
     // ============================================
@@ -296,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Scroll to center on current position
-        scrollToCurrent();
+        setTimeout(scrollToCurrent, 50);
     }
 
     function scrollToCurrent() {
@@ -307,13 +355,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Find the current cell
         const cells = grid.querySelectorAll('.cell');
         let currentCell = null;
-        let index = 0;
         for (const cell of cells) {
             if (cell.classList.contains('cell-current')) {
                 currentCell = cell;
                 break;
             }
-            index++;
         }
 
         if (currentCell) {
@@ -491,6 +537,36 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI();
     }
 
+    function handlePrint() {
+        window.print();
+    }
+
+    // ============================================
+    // TUTORIAL INTEGRATION
+    // ============================================
+    let tutorial = null;
+
+    // Initialize tutorial after everything else is ready
+    function initTutorial() {
+        if (typeof TutorialManager !== 'undefined') {
+            tutorial = new TutorialManager();
+            // Pass app functions to tutorial if needed
+            if (tutorial.setAppFunctions) {
+                tutorial.setAppFunctions({
+                    handleD8Roll,
+                    handleD20Roll,
+                    handleD4Roll,
+                    handlePlaceObjective,
+                    handleBalance,
+                    handleUndo,
+                    handleReset,
+                    handlePrint,
+                    updateUI
+                });
+            }
+        }
+    }
+
     // ============================================
     // EVENT LISTENERS
     // ============================================
@@ -501,17 +577,30 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.placeObjectiveBtn.addEventListener('click', handlePlaceObjective);
     elements.undoBtn.addEventListener('click', handleUndo);
     elements.resetBtn.addEventListener('click', handleReset);
-    
-    elements.printBtn.addEventListener('click', () => {
-        window.print();
-    });
+    elements.printBtn.addEventListener('click', handlePrint);
 
-    // Keyboard shortcuts
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
     document.addEventListener('keydown', (e) => {
+        // Don't handle shortcuts if tutorial is active
+        if (tutorial && tutorial.isActive) {
+            // Let tutorial handle its own shortcuts
+            return;
+        }
+
+        // Don't handle if typing in an input or textarea
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') return;
+
+        // D8 - Difficulty
         if (e.key === '8' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             elements.rollD8Btn.click();
+            return;
         }
+
+        // Enter - Roll D20 or D4
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (!elements.rollD4Btn.disabled) {
@@ -519,21 +608,56 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (!elements.rollD20Btn.disabled) {
                 elements.rollD20Btn.click();
             }
+            return;
         }
-        if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            elements.balanceBtn.click();
+
+        // G - Place Goal
+        if (e.key === 'g' || e.key === 'G') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                elements.placeObjectiveBtn.click();
+            }
+            return;
         }
-        if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            elements.placeObjectiveBtn.click();
+
+        // B - Balance
+        if (e.key === 'b' || e.key === 'B') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                elements.balanceBtn.click();
+            }
+            return;
         }
-        if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+
+        // Ctrl+Z - Undo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
             e.preventDefault();
             elements.undoBtn.click();
+            return;
         }
-        if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
-            elements.resetBtn.click();
+
+        // R - Reset
+        if (e.key === 'r' || e.key === 'R') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                elements.resetBtn.click();
+            }
+            return;
+        }
+
+        // Ctrl+P - Print (let browser handle)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            // Let browser handle print
+            return;
+        }
+
+        // T - Tutorial
+        if (e.key === 't' || e.key === 'T') {
+            if (!e.ctrlKey && !e.metaKey && tutorial) {
+                e.preventDefault();
+                tutorial.start();
+            }
+            return;
         }
     });
 
@@ -546,8 +670,10 @@ document.addEventListener('DOMContentLoaded', () => {
     addLogEntry('🎯 70% new directions, 30% backup', 'info');
     addLogEntry('⭐ Press "G" to place the Goal', 'info');
     addLogEntry('⚖️ Press "B" to balance', 'info');
+    addLogEntry('❓ Press "T" for tutorial', 'info');
     addLogEntry('💡 8=D8 | Enter=Roll | G=Goal | B=Balance | Ctrl+Z=Undo | R=Reset', 'info');
     
+    // Set initial difficulty
     const initialDiff = mapGenerator.setDifficulty(3);
     currentD8Roll = 3;
     elements.d8Display.textContent = '3';
@@ -558,7 +684,12 @@ document.addEventListener('DOMContentLoaded', () => {
     currentMap = new Map(mapGenerator.rooms);
     updateUI();
 
-    // Handle resize
+    // Initialize tutorial after a short delay to ensure everything is loaded
+    setTimeout(initTutorial, 100);
+
+    // ============================================
+    // WINDOW RESIZE HANDLER
+    // ============================================
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
@@ -567,9 +698,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
     });
 
-    // Also scroll on any update
+    // ============================================
+    // MUTATION OBSERVER FOR SCROLLING
+    // ============================================
     const observer = new MutationObserver(() => {
         scrollToCurrent();
     });
     observer.observe(elements.grid, { childList: true, subtree: true });
+
+    // ============================================
+    // EXPOSE FUNCTIONS FOR TUTORIAL
+    // ============================================
+    window.appFunctions = {
+        handleD8Roll,
+        handleD20Roll,
+        handleD4Roll,
+        handlePlaceObjective,
+        handleBalance,
+        handleUndo,
+        handleReset,
+        handlePrint,
+        updateUI,
+        addLogEntry
+    };
 });
