@@ -12,82 +12,82 @@
             <h1>🗺️ Dungeon Cartographer</h1>
         </header>
 
-        <div id="map-container">
-            <div id="dungeon-grid"></div>
-        </div>
-
-        <div id="bottom-panel">
-            <!-- Dice Info -->
-            <div class="dice-info">
-                <div class="dice-box">
-                    <span class="dice-label">🎲 D8</span>
-                    <span class="dice-value" id="d8Display">3</span>
-                    <span class="dice-status" id="d8Status">Difficulty</span>
-                </div>
-                <div class="dice-box">
-                    <span class="dice-label">🎲 D20</span>
-                    <span class="dice-value" id="d20Display">-</span>
-                    <span class="dice-status" id="d20Status">Ready</span>
-                </div>
-                <div class="dice-box">
-                    <span class="dice-label">🎲 D4</span>
-                    <span class="dice-value" id="d4Display">-</span>
-                    <span class="dice-status" id="d4Status">Waiting</span>
-                </div>
-                <div class="dice-box">
-                    <span class="dice-label">📊 Charges</span>
-                    <span class="dice-value" id="chargesDisplay">0</span>
-                    <span class="dice-status" id="chargesStatus">Roll D20</span>
-                </div>
-                <div class="dice-box">
-                    <span class="dice-label">🏠 Rooms</span>
-                    <span class="dice-value" id="roomCount">0</span>
-                    <span class="dice-status">Total</span>
-                </div>
-                <div class="dice-box">
-                    <span class="dice-label">📍 Position</span>
-                    <span class="dice-value" id="position">(0,0)</span>
-                    <span class="dice-status" id="direction">-</span>
-                </div>
+        <div id="main-area">
+            <!-- Map Container - Left Side -->
+            <div id="map-container">
+                <div id="dungeon-grid"></div>
             </div>
 
-            <!-- Difficulty Display -->
-            <div class="difficulty-display">
-                <span class="difficulty-label">⚔️ Difficulty:</span>
-                <span class="difficulty-value" id="difficultyDisplay">Normal</span>
-                <span class="difficulty-detail" id="difficultyDetail">(3 rooms minimum)</span>
-            </div>
-
-            <!-- Stats Panel -->
-            <div class="stats-panel" id="statsPanel">
-                <div class="stats-row">
-                    <span class="stats-label">📊 Dungeon Stats</span>
+            <!-- Stats Panel - Right Side -->
+            <div id="stats-panel">
+                <div class="stats-section">
+                    <h3>⚔️ Difficulty</h3>
+                    <div class="difficulty-display">
+                        <span class="difficulty-value" id="difficultyDisplay">Normal</span>
+                        <span class="difficulty-detail" id="difficultyDetail">Balanced dungeon</span>
+                    </div>
                 </div>
-                <div class="stats-row" id="statsContent">
-                    <span style="color: #666;">Build a dungeon to see stats</span>
+
+                <div class="stats-section">
+                    <h3>📊 Dungeon Stats</h3>
+                    <div class="stats-grid" id="statsContent">
+                        <span style="color: #666; grid-column: 1/-1;">Build a dungeon to see stats</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Feature Stats -->
-            <div class="feature-stats" id="featureStats">
-                <span style="color: #666;">No features yet</span>
-            </div>
+                <div class="stats-section">
+                    <h3>🎯 Room Types</h3>
+                    <div class="room-types" id="roomTypesContent">
+                        <span style="color: #666;">No rooms yet</span>
+                    </div>
+                </div>
 
-            <!-- Action Buttons -->
-            <div class="controls">
-                <button id="rollD8Btn" class="btn btn-primary">🎲 Roll D8</button>
-                <button id="rollD20Btn" class="btn btn-secondary">🎲 Roll D20</button>
-                <button id="rollD4Btn" class="btn btn-info" disabled>🎲 Roll D4</button>
-                <button id="balanceBtn" class="btn btn-warning">⚖️ Balance</button>
-                <button id="placeObjectiveBtn" class="btn btn-gold">⭐ Place Goal</button>
-                <button id="undoBtn" class="btn btn-danger">↩️ Undo</button>
-                <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
-                <button id="printBtn" class="btn btn-success">🖨️ Print</button>
-            </div>
+                <div class="stats-section">
+                    <h3>🎲 Dice & Charges</h3>
+                    <div class="dice-grid">
+                        <div class="dice-item">
+                            <span class="dice-label">🎲 D8</span>
+                            <span class="dice-value" id="d8Display">3</span>
+                        </div>
+                        <div class="dice-item">
+                            <span class="dice-label">🎲 D20</span>
+                            <span class="dice-value" id="d20Display">-</span>
+                        </div>
+                        <div class="dice-item">
+                            <span class="dice-label">🎲 D4</span>
+                            <span class="dice-value" id="d4Display">-</span>
+                        </div>
+                        <div class="dice-item">
+                            <span class="dice-label">📊 Charges</span>
+                            <span class="dice-value" id="chargesDisplay">0</span>
+                        </div>
+                    </div>
+                    <div class="dice-status" id="diceStatus">Roll D8 to set difficulty</div>
+                </div>
 
-            <!-- Log -->
-            <div class="log-container">
-                <div id="log"></div>
+                <div class="stats-section">
+                    <h3>📍 Position</h3>
+                    <div class="position-display">
+                        <span class="position-value" id="position">(0, 0)</span>
+                        <span class="direction-value" id="direction">-</span>
+                    </div>
+                </div>
+
+                <div class="stats-section controls-section">
+                    <button id="rollD8Btn" class="btn btn-primary btn-small">🎲 D8</button>
+                    <button id="rollD20Btn" class="btn btn-secondary btn-small">🎲 D20</button>
+                    <button id="rollD4Btn" class="btn btn-info btn-small" disabled>🎲 D4</button>
+                    <button id="balanceBtn" class="btn btn-warning btn-small">⚖️</button>
+                    <button id="placeObjectiveBtn" class="btn btn-gold btn-small">⭐</button>
+                    <button id="undoBtn" class="btn btn-danger btn-small">↩️</button>
+                    <button id="resetBtn" class="btn btn-danger btn-small">🔄</button>
+                    <button id="printBtn" class="btn btn-success btn-small">🖨️</button>
+                </div>
+
+                <div class="stats-section log-section">
+                    <h3>📜 Log</h3>
+                    <div id="log"></div>
+                </div>
             </div>
         </div>
     </div>
