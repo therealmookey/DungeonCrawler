@@ -1,6 +1,6 @@
 /**
- * Dungeon Cartographer - Manual Mode
- * User controls the dungeon building with dice rolls
+ * Dungeon Cartographer - Core Generator
+ * Clean version without traps, treasures, or special rooms
  */
 
 class DungeonMapGenerator {
@@ -13,25 +13,13 @@ class DungeonMapGenerator {
         this.currentPos = { x: 0, y: 0 };
         this.depth = 0;
         this.roomCounter = 0;
-        this.history = []; // For undo functionality
+        this.history = [];
         this.isComplete = false;
         this.charges = 0;
         this.d20Rolls = [];
         this.d4Rolls = [];
         this.currentD20 = null;
         this.currentD4 = null;
-        
-        // Stats
-        this.stats = {
-            total: 0,
-            monsters: 0,
-            treasures: 0,
-            traps: 0,
-            bosses: 0,
-            shops: 0,
-            puzzles: 0,
-            empty: 0,
-        };
         
         // Start room
         this.addRoom(0, 0, 'start');
@@ -59,7 +47,6 @@ class DungeonMapGenerator {
         let roll = 0;
         let count = 0;
         
-        // Roll until we get a 1
         do {
             roll = this.rollDice(20);
             this.d20Rolls.push(roll);
@@ -80,7 +67,7 @@ class DungeonMapGenerator {
     // Place a room in the current direction
     placeRoom(direction) {
         if (this.charges <= 0) {
-            return { success: false, message: 'No charges remaining! Roll D20 first.' };
+            return { success: false, message: 'No charges remaining!' };
         }
 
         const dir = this.getDirection(direction);
@@ -101,81 +88,26 @@ class DungeonMapGenerator {
             };
         }
 
-        // Create new room - randomize type based on D6 for variety
-        const roomType = this.generateRoomType(this.rollDice(20));
-        this.addRoom(newX, newY, roomType.type, roomType.icon, roomType.label, roomType.description, roomType.color);
+        // Create new room - just a basic room, no special types
+        this.addRoom(newX, newY, 'room', '⬜', 'Room', '');
         this.currentPos = { x: newX, y: newY };
         this.depth++;
         this.charges--;
         this.addHistory('place', { 
             x: newX, 
             y: newY, 
-            direction: dir.name, 
-            roomType: roomType.type 
+            direction: dir.name
         });
 
         return {
             success: true,
-            message: `Placed ${roomType.description} (${dir.emoji} ${dir.name})`,
+            message: `Placed room (${dir.emoji} ${dir.name})`,
             room: this.rooms.get(key),
-            chargesLeft: this.charges,
-            roomType: roomType
+            chargesLeft: this.charges
         };
     }
 
-    generateRoomType(d20) {
-        if (d20 === 1) return { 
-            type: 'boss', 
-            icon: '👑', 
-            label: 'Boss', 
-            description: 'Boss Chamber', 
-            color: 'has-boss' 
-        };
-        if (d20 <= 4) return { 
-            type: 'treasure', 
-            icon: '💰', 
-            label: 'Treasure', 
-            description: 'Treasure Hoard', 
-            color: 'has-treasure' 
-        };
-        if (d20 <= 8) return { 
-            type: 'trap', 
-            icon: '⚠️', 
-            label: 'Trap', 
-            description: 'Pit Trap', 
-            color: 'has-trap' 
-        };
-        if (d20 <= 11) return { 
-            type: 'shop', 
-            icon: '🏪', 
-            label: 'Shop', 
-            description: 'Merchant', 
-            color: 'has-shop' 
-        };
-        if (d20 <= 15) return { 
-            type: 'monster', 
-            icon: '👹', 
-            label: 'Monster', 
-            description: 'Monster Lair', 
-            color: '' 
-        };
-        if (d20 <= 18) return { 
-            type: 'puzzle', 
-            icon: '🧩', 
-            label: 'Puzzle', 
-            description: 'Puzzle Room', 
-            color: '' 
-        };
-        return { 
-            type: 'empty', 
-            icon: '⬜', 
-            label: 'Empty', 
-            description: 'Empty Chamber', 
-            color: '' 
-        };
-    }
-
-    addRoom(x, y, type = 'empty', icon = '⬜', label = 'Room', description = '', color = '') {
+    addRoom(x, y, type = 'room', icon = '⬜', label = 'Room', color = '') {
         const key = `${x},${y}`;
         if (!this.rooms.has(key)) {
             this.roomCounter++;
@@ -186,19 +118,9 @@ class DungeonMapGenerator {
             type: type,
             icon: icon,
             label: label,
-            description: description,
-            color: color,
             id: this.roomCounter,
             placed: true
         });
-
-        if (type !== 'start') {
-            this.stats.total++;
-            const statKey = type + 's';
-            if (this.stats.hasOwnProperty(statKey)) {
-                this.stats[statKey]++;
-            }
-        }
     }
 
     addHistory(action, data) {
@@ -216,23 +138,15 @@ class DungeonMapGenerator {
             const key = `${lastAction.data.x},${lastAction.data.y}`;
             const room = this.rooms.get(key);
             if (room && room.type !== 'start') {
-                // Remove the room
                 this.rooms.delete(key);
-                this.stats.total--;
-                const statKey = room.type + 's';
-                if (this.stats.hasOwnProperty(statKey)) {
-                    this.stats[statKey]--;
-                }
-                // Move back to previous position
                 const prev = this.history[this.history.length - 1];
                 if (prev) {
                     this.currentPos = { x: prev.data.x || 0, y: prev.data.y || 0 };
                 }
-                // Restore charge
                 this.charges++;
                 return { 
                     success: true, 
-                    message: `Undid room placement (${room.description})`,
+                    message: `Undid room placement`,
                     roomRemoved: room
                 };
             }
@@ -251,7 +165,6 @@ class DungeonMapGenerator {
             }
         }
 
-        // If we couldn't undo, push it back
         this.history.push(lastAction);
         return { success: false, message: 'Could not undo this action' };
     }
@@ -259,7 +172,6 @@ class DungeonMapGenerator {
     exportMapData() {
         return {
             rooms: Array.from(this.rooms.entries()).map(([key, room]) => ({ key, ...room })),
-            stats: this.stats,
             totalRooms: this.rooms.size,
             depth: this.depth,
             charges: this.charges,

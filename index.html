@@ -3,83 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🗺️ Dungeon Cartographer - Manual</title>
+    <title>🗺️ Dungeon Cartographer</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="app">
+        <!-- Header - Minimal -->
         <header>
             <h1>🗺️ Dungeon Cartographer</h1>
-            <p class="subtitle">Manual dungeon building with dice rolls</p>
         </header>
 
-        <!-- Roll Controls -->
-        <div class="controls">
-            <button id="rollD20Btn" class="btn btn-primary">🎲 Roll D20</button>
-            <button id="rollD4Btn" class="btn btn-secondary" disabled>🎲 Roll D4</button>
-            <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
-            <button id="undoBtn" class="btn btn-warning">↩️ Undo</button>
-            <button id="printBtn" class="btn btn-success">🖨️ Print Map</button>
-        </div>
-
-        <!-- Dice Info -->
-        <div class="dice-info">
-            <div class="dice-box">
-                <span class="dice-label">🎲 D20</span>
-                <span class="dice-value" id="d20Display">-</span>
-                <span class="dice-status" id="d20Status">Ready</span>
-            </div>
-            <div class="dice-box">
-                <span class="dice-label">🎲 D4</span>
-                <span class="dice-value" id="d4Display">-</span>
-                <span class="dice-status" id="d4Status">Waiting for D20</span>
-            </div>
-            <div class="dice-box">
-                <span class="dice-label">📊 Charges</span>
-                <span class="dice-value" id="chargesDisplay">0</span>
-                <span class="dice-status" id="chargesStatus">Roll D20 first</span>
-            </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">🏠 Rooms</span>
-                <span class="stat-value" id="roomCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">📏 Depth</span>
-                <span class="stat-value" id="depth">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">📍 Position</span>
-                <span class="stat-value" id="position">(0, 0)</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">🎯 Direction</span>
-                <span class="stat-value" id="direction">-</span>
-            </div>
-        </div>
-
-        <!-- Dungeon Grid -->
-        <div id="dungeon-container">
+        <!-- Main Map Area - Takes most of the screen -->
+        <div id="map-container">
             <div id="dungeon-grid"></div>
         </div>
 
-        <!-- Legend -->
-        <div id="legend-container" class="log-container">
-            <!-- Legend rendered by JavaScript -->
-        </div>
+        <!-- Bottom Controls - All controls at the bottom -->
+        <div id="bottom-panel">
+            <!-- Dice Info -->
+            <div class="dice-info">
+                <div class="dice-box">
+                    <span class="dice-label">🎲 D20</span>
+                    <span class="dice-value" id="d20Display">-</span>
+                    <span class="dice-status" id="d20Status">Ready</span>
+                </div>
+                <div class="dice-box">
+                    <span class="dice-label">🎲 D4</span>
+                    <span class="dice-value" id="d4Display">-</span>
+                    <span class="dice-status" id="d4Status">Waiting</span>
+                </div>
+                <div class="dice-box">
+                    <span class="dice-label">📊 Charges</span>
+                    <span class="dice-value" id="chargesDisplay">0</span>
+                    <span class="dice-status" id="chargesStatus">Roll D20</span>
+                </div>
+                <div class="dice-box">
+                    <span class="dice-label">🏠 Rooms</span>
+                    <span class="dice-value" id="roomCount">0</span>
+                    <span class="dice-status">Total</span>
+                </div>
+                <div class="dice-box">
+                    <span class="dice-label">📍 Position</span>
+                    <span class="dice-value" id="position">(0,0)</span>
+                    <span class="dice-status" id="direction">-</span>
+                </div>
+            </div>
 
-        <!-- Log -->
-        <div class="log-container">
-            <h3>📜 Action Log</h3>
-            <div id="log"></div>
-        </div>
+            <!-- Action Buttons -->
+            <div class="controls">
+                <button id="rollD20Btn" class="btn btn-primary">🎲 Roll D20</button>
+                <button id="rollD4Btn" class="btn btn-secondary" disabled>🎲 Roll D4</button>
+                <button id="undoBtn" class="btn btn-warning">↩️ Undo</button>
+                <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
+                <button id="printBtn" class="btn btn-success">🖨️ Print</button>
+            </div>
 
-        <footer>
-            <p>Created with 🎲 for D&D | <a href="#" target="_blank">GitHub</a></p>
-        </footer>
+            <!-- Log - Compact -->
+            <div class="log-container">
+                <div id="log"></div>
+            </div>
+        </div>
     </div>
 
     <script src="js/dungeon.js"></script>
