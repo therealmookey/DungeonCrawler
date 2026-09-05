@@ -3,23 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🗺️ Dungeon Cartographer</title>
+    <title>🗺️ Dungeon Cartographer - Manual</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="app">
         <header>
             <h1>🗺️ Dungeon Cartographer</h1>
-            <p class="subtitle">Generate printable dungeon maps for your D&D campaign</p>
+            <p class="subtitle">Manual dungeon building with dice rolls</p>
         </header>
 
+        <!-- Roll Controls -->
         <div class="controls">
-            <button id="generateBtn" class="btn btn-primary">🎲 Generate Dungeon</button>
-            <button id="exportBtn" class="btn btn-success">📤 Export JSON</button>
-            <button id="printBtn" class="btn btn-secondary">🖨️ Print Map</button>
+            <button id="rollD20Btn" class="btn btn-primary">🎲 Roll D20</button>
+            <button id="rollD4Btn" class="btn btn-secondary" disabled>🎲 Roll D4</button>
             <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
+            <button id="undoBtn" class="btn btn-warning">↩️ Undo</button>
+            <button id="printBtn" class="btn btn-success">🖨️ Print Map</button>
         </div>
 
+        <!-- Dice Info -->
+        <div class="dice-info">
+            <div class="dice-box">
+                <span class="dice-label">🎲 D20</span>
+                <span class="dice-value" id="d20Display">-</span>
+                <span class="dice-status" id="d20Status">Ready</span>
+            </div>
+            <div class="dice-box">
+                <span class="dice-label">🎲 D4</span>
+                <span class="dice-value" id="d4Display">-</span>
+                <span class="dice-status" id="d4Status">Waiting for D20</span>
+            </div>
+            <div class="dice-box">
+                <span class="dice-label">📊 Charges</span>
+                <span class="dice-value" id="chargesDisplay">0</span>
+                <span class="dice-status" id="chargesStatus">Roll D20 first</span>
+            </div>
+        </div>
+
+        <!-- Stats -->
         <div class="stats">
             <div class="stat-item">
                 <span class="stat-label">🏠 Rooms</span>
@@ -30,38 +52,33 @@
                 <span class="stat-value" id="depth">0</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">👹 Monsters</span>
-                <span class="stat-value" id="monsterCount">0</span>
+                <span class="stat-label">📍 Position</span>
+                <span class="stat-value" id="position">(0, 0)</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">💰 Treasure</span>
-                <span class="stat-value" id="treasureCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">⚠️ Traps</span>
-                <span class="stat-value" id="trapCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">👑 Bosses</span>
-                <span class="stat-value" id="bossCount">0</span>
+                <span class="stat-label">🎯 Direction</span>
+                <span class="stat-value" id="direction">-</span>
             </div>
         </div>
 
+        <!-- Dungeon Grid -->
         <div id="dungeon-container">
             <div id="dungeon-grid"></div>
         </div>
 
+        <!-- Legend -->
         <div id="legend-container" class="log-container">
-            <!-- Legend will be rendered by JavaScript -->
+            <!-- Legend rendered by JavaScript -->
         </div>
 
+        <!-- Log -->
         <div class="log-container">
-            <h3>📜 Generation Log</h3>
+            <h3>📜 Action Log</h3>
             <div id="log"></div>
         </div>
 
         <footer>
-            <p>Created with 🎲 for D&D | <a href="https://github.com/your-username/dungeon-cartographer" target="_blank">GitHub</a></p>
+            <p>Created with 🎲 for D&D | <a href="#" target="_blank">GitHub</a></p>
         </footer>
     </div>
 
