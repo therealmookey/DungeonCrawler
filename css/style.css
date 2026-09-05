@@ -14,7 +14,7 @@ html, body {
 
 body {
     font-family: 'Courier New', monospace;
-    background: #1a1a1a;
+    background: #2a2a2a;
     color: #e0d6b0;
     display: flex;
     justify-content: center;
@@ -149,51 +149,263 @@ header h1 {
 }
 
 /* ============================================
-   MAP CONTAINER - Center
+   MAP CONTAINER - Center - DUNGEON MAP STYLE
    ============================================ */
 #map-container {
     flex: 1;
-    background: #0a0a0a;
+    background: #d4c8a8;
     border-radius: 12px;
-    border: 2px solid #2a2a2a;
+    border: 4px solid #8a7a5a;
     overflow: auto;
-    padding: 15px;
+    padding: 20px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 0;
     position: relative;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.15);
 }
 
 #map-container::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
 #map-container::-webkit-scrollbar-track {
-    background: #1a1a1a;
-    border-radius: 6px;
+    background: #c4b898;
+    border-radius: 7px;
+    border: 1px solid #8a7a5a;
 }
 
 #map-container::-webkit-scrollbar-thumb {
-    background: #d4a843;
-    border-radius: 6px;
-    border: 2px solid #1a1a1a;
+    background: #8a7a5a;
+    border-radius: 7px;
+    border: 2px solid #c4b898;
 }
 
 #map-container::-webkit-scrollbar-thumb:hover {
-    background: #e8b84a;
+    background: #6a5a3a;
 }
 
 #map-container::-webkit-scrollbar-corner {
-    background: #1a1a1a;
+    background: #c4b898;
 }
 
+/* ============================================
+   DUNGEON GRID - Classic Map Style
+   ============================================ */
 #dungeon-grid {
     display: grid;
-    gap: 2px;
+    gap: 0;
     margin: 0 auto;
-    padding: 20px;
+    background: #e8dcc8;
+    border: 4px solid #6a5a3a;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   CELL STYLES - Classic Dungeon Map
+   ============================================ */
+.cell {
+    width: 60px;
+    height: 60px;
+    background: #f0e8d8;
+    border: 2px solid #8a7a5a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6em;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+}
+
+/* ============================================
+   WALL STYLES - Diagonal Hatching
+   ============================================ */
+.cell-wall {
+    background: transparent;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Diagonal hatching pattern for walls */
+.cell-wall::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 8px,
+        #6a5a3a 8px,
+        #6a5a3a 9px
+    );
+    opacity: 0.6;
+}
+
+/* Secondary diagonal for cross-hatching */
+.cell-wall::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 8px,
+        #6a5a3a 8px,
+        #6a5a3a 9px
+    );
+    opacity: 0.4;
+}
+
+/* ============================================
+   ROOM STYLES - Thick Borders
+   ============================================ */
+.cell-room {
+    background: #f0e8d8;
+    border: 3px solid #4a3a2a;
+    position: relative;
+}
+
+.cell-room .icon {
+    font-size: 1.8em;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.cell-room .label {
+    font-size: 0.5em;
+    margin-top: 2px;
+    color: #3a2a1a;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(240, 232, 216, 0.85);
+    padding: 0 4px;
+    border-radius: 2px;
+}
+
+/* ============================================
+   START ROOM - Classic Map Style
+   ============================================ */
+.cell-start {
+    background: #e8f0d8;
+    border: 4px solid #2a5a2a;
+    box-shadow: inset 0 0 20px rgba(42, 90, 42, 0.15);
+}
+
+.cell-start .icon {
+    font-size: 2.2em;
+}
+
+.cell-start .label {
+    color: #2a5a2a;
+    font-weight: bold;
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ============================================
+   OBJECTIVE ROOM - Classic Map Style
+   ============================================ */
+.cell-room.has-objective {
+    background: #f0e8d0;
+    border: 4px solid #d4a843;
+    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.2);
+    animation: pulse-gold-classic 2s ease-in-out infinite;
+}
+
+.cell-room.has-objective .icon {
+    font-size: 2.4em;
+}
+
+.cell-room.has-objective .label {
+    color: #8a6a1a;
+    font-weight: bold;
+    font-size: 0.55em;
+}
+
+@keyframes pulse-gold-classic {
+    0%, 100% { box-shadow: inset 0 0 20px rgba(212, 168, 67, 0.1); }
+    50% { box-shadow: inset 0 0 40px rgba(212, 168, 67, 0.3); }
+}
+
+/* ============================================
+   FEATURE ROOM STYLES - Classic Map
+   ============================================ */
+.cell-room.has-treasure {
+    background: #f0f0d8;
+    border: 4px solid #3a7a3a;
+    box-shadow: inset 0 0 20px rgba(58, 122, 58, 0.1);
+}
+
+.cell-room.has-trap {
+    background: #f0d8d8;
+    border: 4px solid #8a2a2a;
+    box-shadow: inset 0 0 20px rgba(138, 42, 42, 0.1);
+}
+
+.cell-room.has-monster {
+    background: #e8d8f0;
+    border: 4px solid #5a2a7a;
+    box-shadow: inset 0 0 20px rgba(90, 42, 122, 0.1);
+}
+
+.cell-room.has-puzzle {
+    background: #d8e8f0;
+    border: 4px solid #2a5a7a;
+    box-shadow: inset 0 0 20px rgba(42, 90, 122, 0.1);
+}
+
+.cell-room.has-shop {
+    background: #d8f0e8;
+    border: 4px solid #2a7a5a;
+    box-shadow: inset 0 0 20px rgba(42, 122, 90, 0.1);
+}
+
+.cell-room.has-boss {
+    background: #f0d8e8;
+    border: 4px solid #7a2a5a;
+    box-shadow: inset 0 0 30px rgba(122, 42, 90, 0.2);
+    animation: pulse-boss-classic 3s ease-in-out infinite;
+}
+
+@keyframes pulse-boss-classic {
+    0%, 100% { 
+        box-shadow: inset 0 0 20px rgba(122, 42, 90, 0.1);
+        border-color: #7a2a5a;
+    }
+    50% { 
+        box-shadow: inset 0 0 40px rgba(122, 42, 90, 0.25);
+        border-color: #aa3a8a;
+    }
+}
+
+/* ============================================
+   CURRENT POSITION - Classic Map Style
+   ============================================ */
+.cell-current {
+    border: 4px solid #d4a843 !important;
+    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.3), 0 0 20px rgba(212, 168, 67, 0.2);
+    transform: scale(1.04);
+    z-index: 2;
+    background: #f5edd8 !important;
+}
+
+.cell-current .icon {
+    transform: scale(1.1);
 }
 
 /* ============================================
@@ -596,255 +808,6 @@ header h1 {
 .log-entry.balance { color: #88ddff; }
 
 /* ============================================
-   CELL STYLES
-   ============================================ */
-.cell {
-    width: 55px;
-    height: 55px;
-    border: 1px solid #2a2a2a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6em;
-    text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-
-.cell-wall {
-    background: #141414;
-    border-color: #1a1a1a;
-}
-
-.cell-wall::after {
-    content: '⬛';
-    font-size: 1.2em;
-    opacity: 0.3;
-}
-
-.cell-room {
-    background: #222222;
-    border-color: #333333;
-}
-
-/* ============================================
-   START ROOM
-   ============================================ */
-.cell-start {
-    background: #1a4a1a;
-    border-color: #4a8a2a;
-    animation: pulse-start 2s ease-in-out infinite;
-    box-shadow: 0 0 20px rgba(74, 138, 42, 0.3);
-}
-
-.cell-start .icon {
-    font-size: 2em;
-}
-
-.cell-start .label {
-    color: #88ff88;
-    font-weight: bold;
-    font-size: 0.55em;
-    text-shadow: 0 0 10px rgba(74, 138, 42, 0.5);
-}
-
-.cell-start::before {
-    content: '';
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
-    border-radius: 6px;
-    background: transparent;
-    border: 2px solid rgba(74, 138, 42, 0.4);
-    animation: pulse-ring 2s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes pulse-start {
-    0%, 100% {
-        box-shadow: 0 0 15px rgba(74, 138, 42, 0.2);
-        border-color: #4a8a2a;
-    }
-    50% {
-        box-shadow: 0 0 35px rgba(74, 138, 42, 0.6);
-        border-color: #6aaa4a;
-    }
-}
-
-@keyframes pulse-ring {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scale(1.05);
-        opacity: 1;
-    }
-}
-
-/* ============================================
-   CURRENT POSITION
-   ============================================ */
-.cell-current {
-    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.5);
-    border-color: #d4a843 !important;
-    transform: scale(1.05);
-    z-index: 1;
-}
-
-/* ============================================
-   FEATURE ROOM COLORS
-   ============================================ */
-.cell-room.has-treasure {
-    background: #1a3a1a;
-    border-color: #2a8a2a;
-    animation: pulse-gold 2s infinite;
-}
-
-.cell-room.has-trap {
-    background: #3a1a1a;
-    border-color: #8a2a2a;
-    animation: pulse-red 2s infinite;
-}
-
-.cell-room.has-monster {
-    background: #2a1a3a;
-    border-color: #6a2a8a;
-    animation: pulse-purple 2s infinite;
-}
-
-.cell-room.has-puzzle {
-    background: #1a2a3a;
-    border-color: #2a6a8a;
-    animation: pulse-blue 2s infinite;
-}
-
-.cell-room.has-shop {
-    background: #1a3a3a;
-    border-color: #2a8a8a;
-    animation: pulse-cyan 2s infinite;
-}
-
-.cell-room.has-boss {
-    background: #3a1a2a;
-    border-color: #8a2a6a;
-    animation: pulse-boss 2s infinite;
-}
-
-.cell-room.has-objective {
-    background: #1a2a4a;
-    border-color: #ffd700;
-    animation: pulse-objective 1.5s ease-in-out infinite;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-}
-
-.cell-room.has-objective .icon {
-    font-size: 2.2em;
-}
-
-.cell-room.has-objective .label {
-    color: #ffd700;
-    font-weight: bold;
-    font-size: 0.6em;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-}
-
-.cell-room.has-objective::before {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: -6px;
-    right: -6px;
-    bottom: -6px;
-    border-radius: 8px;
-    background: transparent;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    animation: pulse-ring-objective 1.5s ease-in-out infinite;
-    pointer-events: none;
-}
-
-/* Feature Animations */
-@keyframes pulse-gold {
-    0%, 100% { box-shadow: 0 0 5px rgba(212, 168, 67, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.5); }
-}
-
-@keyframes pulse-red {
-    0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); }
-}
-
-@keyframes pulse-purple {
-    0%, 100% { box-shadow: 0 0 5px rgba(128, 0, 255, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(128, 0, 255, 0.5); }
-}
-
-@keyframes pulse-blue {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 100, 255, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 100, 255, 0.5); }
-}
-
-@keyframes pulse-cyan {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 200, 200, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 200, 200, 0.5); }
-}
-
-@keyframes pulse-boss {
-    0%, 100% { 
-        box-shadow: 0 0 10px rgba(200, 0, 150, 0.3);
-        transform: scale(1);
-    }
-    50% { 
-        box-shadow: 0 0 30px rgba(200, 0, 150, 0.6);
-        transform: scale(1.05);
-    }
-}
-
-@keyframes pulse-objective {
-    0%, 100% {
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-        border-color: #ffd700;
-    }
-    50% {
-        box-shadow: 0 0 50px rgba(255, 215, 0, 0.6);
-        border-color: #ffed4a;
-    }
-}
-
-@keyframes pulse-ring-objective {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.3;
-    }
-    50% {
-        transform: scale(1.08);
-        opacity: 0.8;
-    }
-}
-
-/* ============================================
-   CELL CONTENT
-   ============================================ */
-.cell .icon {
-    font-size: 1.5em;
-    line-height: 1;
-}
-
-.cell .label {
-    font-size: 0.45em;
-    opacity: 0.9;
-    margin-top: 1px;
-    color: #ddd;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-    font-weight: bold;
-}
-
-/* ============================================
    TUTORIAL OVERLAY
    ============================================ */
 #tutorial-overlay {
@@ -1079,12 +1042,12 @@ header h1 {
     }
     
     .cell {
-        width: 45px;
-        height: 45px;
+        width: 48px;
+        height: 48px;
     }
     
     .cell .icon {
-        font-size: 1.2em;
+        font-size: 1.4em;
     }
     
     .cell .label {
@@ -1169,12 +1132,12 @@ header h1 {
     }
     
     .cell {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
     }
     
     .cell .icon {
-        font-size: 1em;
+        font-size: 1.2em;
     }
     
     .cell .label {
@@ -1235,12 +1198,12 @@ header h1 {
     }
     
     .cell {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
     }
     
     .cell .icon {
-        font-size: 0.9em;
+        font-size: 1em;
     }
     
     .cell .label {
@@ -1249,20 +1212,20 @@ header h1 {
     
     .cell-start .label {
         display: block !important;
-        font-size: 0.5em;
+        font-size: 0.45em;
     }
     
     .cell-start .icon {
-        font-size: 1.2em;
+        font-size: 1.4em;
     }
     
     .cell-room.has-objective .label {
         display: block !important;
-        font-size: 0.5em;
+        font-size: 0.45em;
     }
     
     .cell-room.has-objective .icon {
-        font-size: 1.4em;
+        font-size: 1.6em;
     }
     
     .btn-small {
@@ -1325,12 +1288,12 @@ header h1 {
     }
     
     .cell {
-        width: 28px;
-        height: 28px;
+        width: 30px;
+        height: 30px;
     }
     
     .cell .icon {
-        font-size: 0.7em;
+        font-size: 0.8em;
     }
     
     #stats-panel {
@@ -1449,7 +1412,7 @@ header h1 {
 }
 
 /* ============================================
-   PRINT STYLES
+   PRINT STYLES - Classic Map Print
    ============================================ */
 @media print {
     html, body {
@@ -1479,14 +1442,15 @@ header h1 {
     }
 
     #map-container {
-        border: 1px solid #ccc;
-        background: white;
+        border: 4px solid #333;
+        background: #f5edd8;
         padding: 20px;
         border-radius: 4px;
         min-height: auto;
         overflow: visible !important;
         flex: none;
         width: 100%;
+        box-shadow: none;
     }
 
     #map-container::-webkit-scrollbar {
@@ -1494,106 +1458,131 @@ header h1 {
     }
 
     #dungeon-grid {
-        padding: 10px;
+        border: 4px solid #333;
+        box-shadow: none;
+        background: #f5edd8;
     }
 
     .cell {
-        width: 45px;
-        height: 45px;
-        border-color: #999;
+        width: 50px;
+        height: 50px;
+        border: 2px solid #333;
+        background: #f5edd8;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .cell-wall {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .cell-wall::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 6px,
+            #666 6px,
+            #666 7px
+        );
+        opacity: 0.5;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .cell-wall::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 6px,
+            #666 6px,
+            #666 7px
+        );
+        opacity: 0.3;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
 
     .cell-room {
-        background: #f0f0f0;
-        border-color: #999;
-    }
-
-    .cell-wall {
-        background: #ddd;
-        border-color: #999;
-    }
-
-    .cell-wall::after {
-        content: ' ';
-        opacity: 0.3;
+        background: #f5edd8 !important;
+        border: 2px solid #333 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
     .cell-start {
-        background: #ccffcc !important;
-        border-color: #009900 !important;
-        animation: none !important;
-        box-shadow: 0 0 10px rgba(0, 153, 0, 0.3) !important;
-    }
-
-    .cell-start::before {
-        display: none !important;
-    }
-
-    .cell-start .label {
-        color: #006600 !important;
+        background: #e8f0d8 !important;
+        border: 3px solid #2a5a2a !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
     .cell-current {
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
-        border-color: #333 !important;
-        transform: none;
+        border: 3px solid #d4a843 !important;
+        box-shadow: none !important;
+        transform: none !important;
     }
 
     .cell .label {
-        color: #222;
-        font-size: 0.4em;
+        color: #333 !important;
+        font-size: 0.5em;
     }
 
     .cell-room.has-treasure {
-        background: #ccffcc !important;
-        border-color: #00cc00 !important;
+        background: #f0f0d8 !important;
+        border: 3px solid #3a7a3a !important;
         animation: none !important;
     }
 
     .cell-room.has-trap {
-        background: #ffcccc !important;
-        border-color: #cc0000 !important;
+        background: #f0d8d8 !important;
+        border: 3px solid #8a2a2a !important;
         animation: none !important;
     }
 
     .cell-room.has-monster {
-        background: #e6cce6 !important;
-        border-color: #990099 !important;
+        background: #e8d8f0 !important;
+        border: 3px solid #5a2a7a !important;
         animation: none !important;
     }
 
     .cell-room.has-puzzle {
-        background: #cce0ff !important;
-        border-color: #0066cc !important;
+        background: #d8e8f0 !important;
+        border: 3px solid #2a5a7a !important;
         animation: none !important;
     }
 
     .cell-room.has-shop {
-        background: #ccffff !important;
-        border-color: #008888 !important;
+        background: #d8f0e8 !important;
+        border: 3px solid #2a7a5a !important;
         animation: none !important;
     }
 
     .cell-room.has-boss {
-        background: #ffccdd !important;
-        border-color: #cc0066 !important;
+        background: #f0d8e8 !important;
+        border: 3px solid #7a2a5a !important;
         animation: none !important;
     }
 
     .cell-room.has-objective {
-        background: #e6e6ff !important;
-        border-color: #ffd700 !important;
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
+        background: #f0e8d0 !important;
+        border: 3px solid #d4a843 !important;
         animation: none !important;
     }
 
-    .cell-room.has-objective::before {
-        display: none !important;
-    }
-
-    .cell-room.has-objective .label {
-        color: #cc9900 !important;
+    .cell .icon {
+        font-size: 1.6em;
     }
 }
