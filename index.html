@@ -10,11 +10,11 @@
     <div id="app">
         <header>
             <h1>🗺️ Dungeon Cartographer</h1>
-            <button id="tutorialBtn" class="btn-tutorial" title="Show Tutorial">❓ Tutorial</button>
+            <button id="tutorialBtn" class="btn-tutorial">❓ Tutorial</button>
         </header>
 
         <div id="main-area">
-            <!-- Stats Panel - Left Side -->
+            <!-- Stats Panel - Left -->
             <div id="stats-panel">
                 <div class="stats-section">
                     <h3>⚔️ Difficulty</h3>
@@ -44,32 +44,20 @@
                 </div>
             </div>
 
-            <!-- Map Container - Center -->
+            <!-- Map - Center -->
             <div id="map-container">
                 <div id="dungeon-grid"></div>
             </div>
 
-            <!-- Dice & Controls Panel - Right Side -->
+            <!-- Dice Panel - Right -->
             <div id="dice-panel">
                 <div class="stats-section">
                     <h3>🎲 Dice</h3>
                     <div class="dice-grid">
-                        <div class="dice-item" data-tutorial="d8">
-                            <span class="dice-label">🎲 D8</span>
-                            <span class="dice-value" id="d8Display">3</span>
-                        </div>
-                        <div class="dice-item" data-tutorial="d20">
-                            <span class="dice-label">🎲 D20</span>
-                            <span class="dice-value" id="d20Display">-</span>
-                        </div>
-                        <div class="dice-item" data-tutorial="d4">
-                            <span class="dice-label">🎲 D4</span>
-                            <span class="dice-value" id="d4Display">-</span>
-                        </div>
-                        <div class="dice-item" data-tutorial="charges">
-                            <span class="dice-label">📊 Charges</span>
-                            <span class="dice-value" id="chargesDisplay">0</span>
-                        </div>
+                        <div class="dice-item"><span class="dice-label">🎲 D8</span><span class="dice-value" id="d8Display">3</span></div>
+                        <div class="dice-item"><span class="dice-label">🎲 D20</span><span class="dice-value" id="d20Display">-</span></div>
+                        <div class="dice-item"><span class="dice-label">🎲 D4</span><span class="dice-value" id="d4Display">-</span></div>
+                        <div class="dice-item"><span class="dice-label">📊 Charges</span><span class="dice-value" id="chargesDisplay">0</span></div>
                     </div>
                     <div class="dice-status" id="diceStatus">Roll D8 to set difficulty</div>
                 </div>
@@ -85,14 +73,14 @@
                 <div class="stats-section controls-section">
                     <h3>🎮 Controls</h3>
                     <div class="button-grid">
-                        <button id="rollD8Btn" class="btn btn-primary btn-small" data-tutorial="d8-btn" title="Roll D8 - Set Difficulty">🎲 D8</button>
-                        <button id="rollD20Btn" class="btn btn-secondary btn-small" data-tutorial="d20-btn" title="Roll D20 - Get Charges">🎲 D20</button>
-                        <button id="rollD4Btn" class="btn btn-info btn-small" data-tutorial="d4-btn" disabled title="Roll D4 - Place Room">🎲 D4</button>
-                        <button id="balanceBtn" class="btn btn-warning btn-small" data-tutorial="balance-btn" title="Balance Features (once per dungeon)">⚖️</button>
-                        <button id="placeObjectiveBtn" class="btn btn-gold btn-small" data-tutorial="objective-btn" title="Place Goal">⭐</button>
-                        <button id="undoBtn" class="btn btn-danger btn-small" data-tutorial="undo-btn" title="Undo">↩️</button>
-                        <button id="resetBtn" class="btn btn-danger btn-small" data-tutorial="reset-btn" title="Reset">🔄</button>
-                        <button id="printBtn" class="btn btn-success btn-small" data-tutorial="print-btn" title="Print">🖨️</button>
+                        <button id="rollD8Btn" class="btn btn-primary btn-small">🎲 D8</button>
+                        <button id="rollD20Btn" class="btn btn-secondary btn-small">🎲 D20</button>
+                        <button id="rollD4Btn" class="btn btn-info btn-small" disabled>🎲 D4</button>
+                        <button id="balanceBtn" class="btn btn-warning btn-small">⚖️</button>
+                        <button id="placeObjectiveBtn" class="btn btn-gold btn-small">⭐</button>
+                        <button id="undoBtn" class="btn btn-danger btn-small">↩️</button>
+                        <button id="resetBtn" class="btn btn-danger btn-small">🔄</button>
+                        <button id="printBtn" class="btn btn-success btn-small">🖨️</button>
                     </div>
                 </div>
 
@@ -103,17 +91,16 @@
                     </div>
                 </div>
 
-                <!-- Keyboard Shortcuts -->
                 <div class="stats-section shortcuts-section">
                     <h3>⌨️ Shortcuts</h3>
                     <div class="shortcuts-grid">
-                        <span class="shortcut-item"><kbd>8</kbd> <span class="shortcut-label">D8</span></span>
-                        <span class="shortcut-item"><kbd>Enter</kbd> <span class="shortcut-label">Roll</span></span>
-                        <span class="shortcut-item"><kbd>G</kbd> <span class="shortcut-label">Goal</span></span>
-                        <span class="shortcut-item"><kbd>B</kbd> <span class="shortcut-label">Balance</span></span>
-                        <span class="shortcut-item"><kbd>Ctrl+Z</kbd> <span class="shortcut-label">Undo</span></span>
-                        <span class="shortcut-item"><kbd>R</kbd> <span class="shortcut-label">Reset</span></span>
-                        <span class="shortcut-item"><kbd>T</kbd> <span class="shortcut-label">Tutorial</span></span>
+                        <span class="shortcut-item"><kbd>8</kbd> D8</span>
+                        <span class="shortcut-item"><kbd>Enter</kbd> Roll</span>
+                        <span class="shortcut-item"><kbd>G</kbd> Goal</span>
+                        <span class="shortcut-item"><kbd>B</kbd> Balance</span>
+                        <span class="shortcut-item"><kbd>Ctrl+Z</kbd> Undo</span>
+                        <span class="shortcut-item"><kbd>R</kbd> Reset</span>
+                        <span class="shortcut-item"><kbd>T</kbd> Tutorial</span>
                     </div>
                 </div>
             </div>
@@ -123,8 +110,8 @@
     <!-- Tutorial Overlay -->
     <div id="tutorial-overlay">
         <div id="tutorial-content">
-            <h2>📖 Welcome to Dungeon Cartographer!</h2>
-            <p>Let's take a quick tour of how to build your dungeon.</p>
+            <h2>📖 Welcome!</h2>
+            <p>Let's take a quick tour.</p>
             <div class="tutorial-buttons">
                 <button id="tutorialNextBtn" class="btn btn-primary">Start Tutorial →</button>
                 <button id="tutorialSkipBtn" class="btn btn-secondary">Skip</button>
@@ -134,7 +121,7 @@
 
     <div id="tutorial-tooltip"></div>
 
-    <!-- ✅ LOAD EACH FILE ONLY ONCE -->
+    <!-- LOAD SCRIPTS IN CORRECT ORDER -->
     <script src="js/dungeon.js"></script>
     <script src="js/app.js"></script>
     <script src="js/tutorial.js"></script>
