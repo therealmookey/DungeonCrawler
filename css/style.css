@@ -207,29 +207,28 @@ header h1 {
 }
 
 /* ============================================
-   CELL STYLES
+   CELL STYLES - Clean & Readable
    ============================================ */
 .cell {
-    background: #f0e8d8;
+    background: #f5edd8;
     border: 2px solid #8a7a5a;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 0.6em;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
     box-sizing: border-box;
     font-family: 'Courier New', monospace;
     margin: 0;
-    padding: 0;
+    padding: 2px;
     flex-shrink: 0;
     flex-grow: 0;
 }
 
 /* ============================================
-   WALL STYLES - Diagonal Hatching
+   WALL STYLES - Clean Hatching
    ============================================ */
 .cell-wall {
     background: transparent;
@@ -250,11 +249,11 @@ header h1 {
     background: repeating-linear-gradient(
         45deg,
         transparent,
-        transparent 8px,
-        #6a5a3a 8px,
-        #6a5a3a 9px
+        transparent 6px,
+        #8a7a5a 6px,
+        #8a7a5a 7px
     );
-    opacity: 0.6;
+    opacity: 0.4;
 }
 
 .cell-wall::after {
@@ -267,143 +266,188 @@ header h1 {
     background: repeating-linear-gradient(
         -45deg,
         transparent,
-        transparent 8px,
-        #6a5a3a 8px,
-        #6a5a3a 9px
+        transparent 6px,
+        #8a7a5a 6px,
+        #8a7a5a 7px
     );
-    opacity: 0.4;
+    opacity: 0.3;
 }
 
 /* ============================================
-   ROOM STYLES
+   ROOM STYLES - Clean & Readable
    ============================================ */
 .cell-room {
-    background: #f0e8d8;
-    border: 3px solid #4a3a2a;
+    background: #f5edd8;
+    border: 3px solid #6a5a3a;
     position: relative;
     margin: 0;
-    padding: 0;
+    padding: 2px;
 }
 
 .cell-room .icon {
+    font-size: 1.6em;
     line-height: 1;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+    display: block;
+    margin-bottom: 1px;
 }
 
 .cell-room .label {
-    margin-top: 2px;
+    font-size: 0.5em;
     color: #3a2a1a;
     font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: rgba(240, 232, 216, 0.85);
+    letter-spacing: 0.3px;
+    background: rgba(245, 237, 216, 0.9);
     padding: 0 4px;
     border-radius: 2px;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ============================================
-   START ROOM
+   START ROOM - Clear & Distinct
    ============================================ */
 .cell-start {
-    background: #e8f0d8;
-    border: 4px solid #2a5a2a;
-    box-shadow: inset 0 0 20px rgba(42, 90, 42, 0.15);
+    background: #d4e8d4;
+    border: 4px solid #2a6a2a;
+    box-shadow: inset 0 0 20px rgba(42, 106, 42, 0.15);
 }
 
 .cell-start .icon {
-    font-size: 2.2em;
+    font-size: 2em;
 }
 
 .cell-start .label {
-    color: #2a5a2a;
+    color: #1a4a1a;
     font-weight: bold;
     font-size: 0.55em;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    background: rgba(212, 232, 212, 0.9);
 }
 
 /* ============================================
-   OBJECTIVE ROOM
+   OBJECTIVE ROOM - Clear & Distinct
    ============================================ */
 .cell-room.has-objective {
-    background: #f0e8d0;
-    border: 4px solid #d4a843;
-    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.2);
-    animation: pulse-gold-classic 2s ease-in-out infinite;
+    background: #f0e8c8;
+    border: 4px solid #c8a030;
+    box-shadow: inset 0 0 20px rgba(200, 160, 48, 0.2);
 }
 
 .cell-room.has-objective .icon {
-    font-size: 2.4em;
+    font-size: 2.2em;
 }
 
 .cell-room.has-objective .label {
-    color: #8a6a1a;
+    color: #8a6a10;
     font-weight: bold;
     font-size: 0.55em;
-}
-
-@keyframes pulse-gold-classic {
-    0%, 100% { box-shadow: inset 0 0 20px rgba(212, 168, 67, 0.1); }
-    50% { box-shadow: inset 0 0 40px rgba(212, 168, 67, 0.3); }
+    background: rgba(240, 232, 200, 0.9);
 }
 
 /* ============================================
-   FEATURE ROOM STYLES
+   FEATURE ROOM STYLES - Color-Coded
    ============================================ */
+/* Treasure - Gold theme */
 .cell-room.has-treasure {
-    background: #f0f0d8;
-    border: 4px solid #3a7a3a;
-    box-shadow: inset 0 0 20px rgba(58, 122, 58, 0.1);
+    background: #f5edc8;
+    border: 3px solid #c8a030;
 }
 
+.cell-room.has-treasure .icon {
+    font-size: 1.8em;
+}
+
+.cell-room.has-treasure .label {
+    color: #8a6a10;
+    background: rgba(245, 237, 200, 0.9);
+}
+
+/* Trap - Red theme */
 .cell-room.has-trap {
-    background: #f0d8d8;
-    border: 4px solid #8a2a2a;
-    box-shadow: inset 0 0 20px rgba(138, 42, 42, 0.1);
+    background: #f5d8d8;
+    border: 3px solid #b04040;
 }
 
+.cell-room.has-trap .icon {
+    font-size: 1.8em;
+}
+
+.cell-room.has-trap .label {
+    color: #8a2020;
+    background: rgba(245, 216, 216, 0.9);
+}
+
+/* Monster - Purple theme */
 .cell-room.has-monster {
     background: #e8d8f0;
-    border: 4px solid #5a2a7a;
-    box-shadow: inset 0 0 20px rgba(90, 42, 122, 0.1);
+    border: 3px solid #8050a0;
 }
 
+.cell-room.has-monster .icon {
+    font-size: 1.8em;
+}
+
+.cell-room.has-monster .label {
+    color: #502a6a;
+    background: rgba(232, 216, 240, 0.9);
+}
+
+/* Puzzle - Blue theme */
 .cell-room.has-puzzle {
     background: #d8e8f0;
-    border: 4px solid #2a5a7a;
-    box-shadow: inset 0 0 20px rgba(42, 90, 122, 0.1);
+    border: 3px solid #4080b0;
 }
 
+.cell-room.has-puzzle .icon {
+    font-size: 1.8em;
+}
+
+.cell-room.has-puzzle .label {
+    color: #1a4a6a;
+    background: rgba(216, 232, 240, 0.9);
+}
+
+/* Shop - Teal theme */
 .cell-room.has-shop {
     background: #d8f0e8;
-    border: 4px solid #2a7a5a;
-    box-shadow: inset 0 0 20px rgba(42, 122, 90, 0.1);
+    border: 3px solid #309080;
 }
 
+.cell-room.has-shop .icon {
+    font-size: 1.8em;
+}
+
+.cell-room.has-shop .label {
+    color: #105a4a;
+    background: rgba(216, 240, 232, 0.9);
+}
+
+/* Boss - Dark Red theme */
 .cell-room.has-boss {
-    background: #f0d8e8;
-    border: 4px solid #7a2a5a;
-    box-shadow: inset 0 0 30px rgba(122, 42, 90, 0.2);
-    animation: pulse-boss-classic 3s ease-in-out infinite;
+    background: #f0d8e0;
+    border: 4px solid #8a2a5a;
+    box-shadow: inset 0 0 20px rgba(138, 42, 90, 0.15);
 }
 
-@keyframes pulse-boss-classic {
-    0%, 100% { 
-        box-shadow: inset 0 0 20px rgba(122, 42, 90, 0.1);
-        border-color: #7a2a5a;
-    }
-    50% { 
-        box-shadow: inset 0 0 40px rgba(122, 42, 90, 0.25);
-        border-color: #aa3a8a;
-    }
+.cell-room.has-boss .icon {
+    font-size: 2em;
+}
+
+.cell-room.has-boss .label {
+    color: #6a1a3a;
+    font-weight: bold;
+    font-size: 0.55em;
+    background: rgba(240, 216, 224, 0.9);
 }
 
 /* ============================================
-   CURRENT POSITION
+   CURRENT POSITION - Clear Indicator
    ============================================ */
 .cell-current {
     border: 4px solid #d4a843 !important;
-    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.3), 0 0 20px rgba(212, 168, 67, 0.2);
+    box-shadow: 0 0 20px rgba(212, 168, 67, 0.3), inset 0 0 20px rgba(212, 168, 67, 0.15);
     transform: scale(1.04);
     z-index: 2;
     background: #f5edd8 !important;
@@ -411,6 +455,10 @@ header h1 {
 
 .cell-current .icon {
     transform: scale(1.1);
+}
+
+.cell-current .label {
+    background: rgba(245, 237, 216, 0.95);
 }
 
 /* ============================================

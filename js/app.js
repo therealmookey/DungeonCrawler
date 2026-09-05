@@ -287,136 +287,136 @@ document.addEventListener('DOMContentLoaded', () => {
     // RENDER GRID - UPDATED WITH FIXED WIDTH
     // ============================================
     function renderGrid() {
-        const grid = elements.grid;
-        if (currentMap.size === 0) {
-            grid.innerHTML = '<div style="padding: 50px; color: #666; text-align: center;">🎲 Roll D8 for difficulty, then D20 to start!</div>';
-            return;
-        }
+    const grid = elements.grid;
+    if (currentMap.size === 0) {
+        grid.innerHTML = '<div style="padding: 50px; color: #666; text-align: center;">🎲 Roll D8 for difficulty, then D20 to start!</div>';
+        return;
+    }
 
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-        for (const [key, room] of currentMap) {
-            minX = Math.min(minX, room.x);
-            maxX = Math.max(maxX, room.x);
-            minY = Math.min(minY, room.y);
-            maxY = Math.max(maxY, room.y);
-        }
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    for (const [key, room] of currentMap) {
+        minX = Math.min(minX, room.x);
+        maxX = Math.max(maxX, room.x);
+        minY = Math.min(minY, room.y);
+        maxY = Math.max(maxY, room.y);
+    }
 
-        const padding = 3;
-        minX -= padding;
-        maxX += padding;
-        minY -= padding;
-        maxY += padding;
+    const padding = 3;
+    minX -= padding;
+    maxX += padding;
+    minY -= padding;
+    maxY += padding;
 
-        const width = maxX - minX + 1;
-        const height = maxY - minY + 1;
-        
-        // Calculate cell size based on container
-        const container = elements.grid.parentElement;
-        const containerWidth = container.clientWidth - 4;
-        const containerHeight = container.clientHeight - 4;
-        
-        let cellSize = Math.min(
-            Math.floor(containerWidth / width),
-            Math.floor(containerHeight / height),
-            65
-        );
-        cellSize = Math.max(cellSize, 20);
+    const width = maxX - minX + 1;
+    const height = maxY - minY + 1;
+    
+    const container = elements.grid.parentElement;
+    const containerWidth = container.clientWidth - 4;
+    const containerHeight = container.clientHeight - 4;
+    
+    let cellSize = Math.min(
+        Math.floor(containerWidth / width),
+        Math.floor(containerHeight / height),
+        65
+    );
+    cellSize = Math.max(cellSize, 20);
 
-        // Set grid with exact columns - THIS FIXES THE WIDTH ISSUE
-        grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
-        grid.innerHTML = '';
+    grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
+    grid.innerHTML = '';
 
-        for (let y = minY; y <= maxY; y++) {
-            for (let x = minX; x <= maxX; x++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                
-                // Explicitly set cell dimensions
-                cell.style.width = cellSize + 'px';
-                cell.style.height = cellSize + 'px';
-                cell.style.minWidth = cellSize + 'px';
-                cell.style.maxWidth = cellSize + 'px';
-                cell.style.minHeight = cellSize + 'px';
-                cell.style.maxHeight = cellSize + 'px';
-                
-                const key = `${x},${y}`;
-                const room = currentMap.get(key);
-                const isCurrent = mapGenerator.currentPos.x === x && mapGenerator.currentPos.y === y;
+    // Define clear, readable labels and icons
+    const roomDisplay = {
+        start: { icon: '🏠', label: 'START' },
+        treasure: { icon: '💰', label: 'TREASURE' },
+        trap: { icon: '⚔️', label: 'TRAP' },
+        monster: { icon: '👹', label: 'MONSTER' },
+        puzzle: { icon: '🧩', label: 'PUZZLE' },
+        shop: { icon: '🏪', label: 'SHOP' },
+        boss: { icon: '👑', label: 'BOSS' },
+        objective: { icon: '⭐', label: 'GOAL' },
+        room: { icon: '⬜', label: '' },
+        empty: { icon: '⬜', label: '' }
+    };
 
-                if (room) {
-                    cell.classList.add('cell-room');
-                    if (room.type === 'start') cell.classList.add('cell-start');
-                    if (room.color) cell.classList.add(room.color);
-                    if (isCurrent) cell.classList.add('cell-current');
+    for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            
+            cell.style.width = cellSize + 'px';
+            cell.style.height = cellSize + 'px';
+            cell.style.minWidth = cellSize + 'px';
+            cell.style.maxWidth = cellSize + 'px';
+            cell.style.minHeight = cellSize + 'px';
+            cell.style.maxHeight = cellSize + 'px';
+            
+            const key = `${x},${y}`;
+            const room = currentMap.get(key);
+            const isCurrent = mapGenerator.currentPos.x === x && mapGenerator.currentPos.y === y;
 
-                    const iconSpan = document.createElement('span');
-                    iconSpan.className = 'icon';
-                    iconSpan.textContent = room.icon || '⬜';
-                    iconSpan.style.fontSize = Math.min(cellSize * 0.35, 32) + 'px';
+            if (room) {
+                cell.classList.add('cell-room');
+                if (room.type === 'start') cell.classList.add('cell-start');
+                if (room.color) cell.classList.add(room.color);
+                if (isCurrent) cell.classList.add('cell-current');
 
-                    const labelSpan = document.createElement('span');
-                    labelSpan.className = 'label';
-                    labelSpan.textContent = room.label || '';
-                    labelSpan.style.fontSize = Math.max(cellSize * 0.1, 6) + 'px';
+                // Determine display info
+                let displayIcon = '⬜';
+                let displayLabel = '';
+                let displayType = room.type;
 
-                    cell.appendChild(iconSpan);
-                    cell.appendChild(labelSpan);
+                if (room.type === 'objective') {
+                    displayIcon = '⭐';
+                    displayLabel = 'GOAL';
+                } else if (room.type === 'start') {
+                    displayIcon = '🏠';
+                    displayLabel = 'START';
+                } else if (room.featureType) {
+                    const feature = roomDisplay[room.featureType];
+                    displayIcon = feature ? feature.icon : '⬜';
+                    displayLabel = feature ? feature.label : '';
                     
-                    let tooltip = `Room ${room.id}`;
-                    if (room.type === 'start') {
-                        tooltip = '⭐ START - The beginning of your dungeon';
+                    // If monster has treasure, show it
+                    if (room.featureType === 'monster' && room.hasTreasure) {
+                        displayIcon = '👹💎';
+                        displayLabel = 'MONSTER';
                     }
-                    if (room.type === 'objective') {
-                        tooltip = '⭐ GOAL - The adventurers\' destination!';
-                    }
-                    if (room.featureType && room.type !== 'objective') {
-                        tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
-                        if (room.hasTreasure) {
-                            tooltip += ' 💎 (has treasure)';
-                        }
-                        const dist = mapGenerator.getRoomDistance(key);
-                        tooltip += `\n📍 ${dist} rooms from start`;
-                    }
-                    cell.title = tooltip;
-                } else {
-                    cell.classList.add('cell-wall');
                 }
-                grid.appendChild(cell);
-            }
-        }
 
-        setTimeout(scrollToCurrent, 50);
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'icon';
+                iconSpan.textContent = displayIcon;
+                iconSpan.style.fontSize = Math.min(cellSize * 0.4, 32) + 'px';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'label';
+                labelSpan.textContent = displayLabel;
+                labelSpan.style.fontSize = Math.max(cellSize * 0.12, 7) + 'px';
+
+                cell.appendChild(iconSpan);
+                cell.appendChild(labelSpan);
+                
+                // Tooltip with room info
+                let tooltip = `Room ${room.id}`;
+                if (room.type === 'start') tooltip = '🏠 START - The beginning';
+                if (room.type === 'objective') tooltip = '⭐ GOAL - The destination!';
+                if (room.featureType && room.type !== 'objective' && room.type !== 'start') {
+                    tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
+                    if (room.hasTreasure) tooltip += ' 💎 (has treasure)';
+                    const dist = mapGenerator.getRoomDistance(key);
+                    tooltip += `\n📍 ${dist} rooms from start`;
+                }
+                cell.title = tooltip;
+            } else {
+                cell.classList.add('cell-wall');
+            }
+            grid.appendChild(cell);
+        }
     }
 
-    function scrollToCurrent() {
-        const container = elements.grid.parentElement;
-        const grid = elements.grid;
-        if (!container || !grid || currentMap.size === 0) return;
-
-        const cells = grid.querySelectorAll('.cell');
-        let currentCell = null;
-        for (const cell of cells) {
-            if (cell.classList.contains('cell-current')) {
-                currentCell = cell;
-                break;
-            }
-        }
-
-        if (currentCell) {
-            const containerRect = container.getBoundingClientRect();
-            const cellRect = currentCell.getBoundingClientRect();
-            
-            const scrollX = cellRect.left - containerRect.left - containerRect.width / 2 + cellRect.width / 2;
-            const scrollY = cellRect.top - containerRect.top - containerRect.height / 2 + cellRect.height / 2;
-            
-            container.scrollTo({
-                left: container.scrollLeft + scrollX,
-                top: container.scrollTop + scrollY,
-                behavior: 'smooth'
-            });
-        }
-    }
+    setTimeout(scrollToCurrent, 50);
+}
 
     // ============================================
     // LOG
