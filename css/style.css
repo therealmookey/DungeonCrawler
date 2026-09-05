@@ -749,3 +749,26 @@ header h1 {
         animation: none !important;
     }
 }
+/* ============================================
+   DIFFICULTY DISPLAY
+   ============================================ */
+.difficulty-display {
+    text-align: center;
+    padding: 4px 0;
+    font-size: 1.1em;
+    background: #0a0a0a;
+    border-radius: 6px;
+    border: 1px solid #2a2a2a;
+}
+
+.difficulty-label {
+    color: #8a8a7a;
+    margin-right: 10px;
+}
+
+.difficulty-value {
+    font-weight: bold;
+    padding: 2px 12px;
+    border-radius: 4px;
+    background: #1a1a1a;
+}

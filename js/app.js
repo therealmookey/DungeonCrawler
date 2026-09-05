@@ -1,6 +1,6 @@
 /**
  * Dungeon Cartographer - App Controller
- * Full map view with bottom controls and hybrid features
+ * With D8 Difficulty System
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,16 +11,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const elements = {
         rollD20Btn: document.getElementById('rollD20Btn'),
         rollD4Btn: document.getElementById('rollD4Btn'),
+        rollD8Btn: document.getElementById('rollD8Btn'),
         balanceBtn: document.getElementById('balanceBtn'),
         resetBtn: document.getElementById('resetBtn'),
         undoBtn: document.getElementById('undoBtn'),
         printBtn: document.getElementById('printBtn'),
         d20Display: document.getElementById('d20Display'),
         d4Display: document.getElementById('d4Display'),
+        d8Display: document.getElementById('d8Display'),
         chargesDisplay: document.getElementById('chargesDisplay'),
         d20Status: document.getElementById('d20Status'),
         d4Status: document.getElementById('d4Status'),
+        d8Status: document.getElementById('d8Status'),
         chargesStatus: document.getElementById('chargesStatus'),
+        difficultyDisplay: document.getElementById('difficultyDisplay'),
         roomCount: document.getElementById('roomCount'),
         position: document.getElementById('position'),
         direction: document.getElementById('direction'),
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentD20Roll = null;
     let currentD4Roll = null;
+    let currentD8Roll = 3;
     let chargesRemaining = 0;
 
     function updateUI() {
@@ -43,7 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentD4Roll !== null) {
             elements.d4Display.textContent = currentD4Roll;
         }
+        elements.d8Display.textContent = currentD8Roll;
         elements.chargesDisplay.textContent = chargesRemaining;
+
+        // Update difficulty display
+        const diff = mapGenerator.getCurrentDifficulty();
+        const diffName = diff ? diff.name : 'Normal';
+        elements.difficultyDisplay.textContent = diffName;
+        elements.difficultyDisplay.style.color = diff ? diff.color : '#ffff44';
 
         updateFeatureStats();
 
@@ -114,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderGrid() {
         const grid = elements.grid;
         if (currentMap.size === 0) {
-            grid.innerHTML = '<div style="padding: 50px; color: #666;">Roll D20 to start building!</div>';
+            grid.innerHTML = '<div style="padding: 50px; color: #666;">Roll D8 for difficulty, then D20 to start!</div>';
             return;
         }
 
@@ -180,6 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (room.featureType) {
                         tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
+                        const dist = mapGenerator.getRoomDistance(key);
+                        tooltip += `\n📍 ${dist} rooms from start`;
                     }
                     cell.title = tooltip;
                 } else {
@@ -193,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderLog() {
         const logDiv = elements.log;
         if (logDiv.children.length === 0) {
-            logDiv.innerHTML = '<div class="log-entry info">🎲 Roll D20 to start!</div>';
+            logDiv.innerHTML = '<div class="log-entry info">🎲 Roll D8 to set difficulty!</div>';
         }
         logDiv.scrollTop = logDiv.scrollHeight;
     }
@@ -209,6 +223,19 @@ document.addEventListener('DOMContentLoaded', () => {
         while (logDiv.children.length > 25) {
             logDiv.removeChild(logDiv.firstChild);
         }
+    }
+
+    function handleD8Roll() {
+        const result = mapGenerator.rollForDifficulty();
+        currentD8Roll = result.roll;
+        const config = result.config;
+        
+        addLogEntry(`🎲 D8 = ${result.roll} → ${config.name} difficulty!`, 'd20-roll');
+        addLogEntry(`📊 Max Monsters: ${config.maxMonsters} | Bosses: ${config.bossCount} | Traps: ${config.trapMin}-${config.trapMax}`, 'info');
+        addLogEntry(`📍 Bosses must be at least ${config.bossMinDistance} rooms from start`, 'info');
+        
+        elements.d8Display.textContent = result.roll;
+        updateUI();
     }
 
     function handleD20Roll() {
@@ -273,9 +300,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMap = new Map(mapGenerator.rooms);
             addLogEntry(`⚖️ ${result.message}`, 'balance');
             if (result.addedFeatures && result.addedFeatures.length > 0) {
+                const featureCounts = {};
                 result.addedFeatures.forEach(f => {
-                    addLogEntry(`   ➕ Added ${f.label} to room ${f.key}`, 'feature');
+                    featureCounts[f.type] = (featureCounts[f.type] || 0) + 1;
                 });
+                for (const [type, count] of Object.entries(featureCounts)) {
+                    addLogEntry(`   ➕ Added ${count} ${type.toUpperCase()}${type === 'boss' ? ' (far from start)' : ''}`, 'feature');
+                }
             }
             updateUI();
         } else {
@@ -306,6 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.direction.textContent = '-';
                 elements.d4Display.textContent = '-';
                 elements.d20Display.textContent = '-';
+                elements.d8Display.textContent = currentD8Roll;
                 elements.featureStats.innerHTML = '<span style="color: #666;">No features yet</span>';
                 addLogEntry('🔄 Dungeon reset!', 'info');
                 addLogEntry('⭐ START room ready at (0, 0)', 'start');
@@ -320,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.direction.textContent = '-';
             elements.d4Display.textContent = '-';
             elements.d20Display.textContent = '-';
+            elements.d8Display.textContent = currentD8Roll;
             elements.featureStats.innerHTML = '<span style="color: #666;">No features yet</span>';
             addLogEntry('🔄 Dungeon reset!', 'info');
             addLogEntry('⭐ START room ready at (0, 0)', 'start');
@@ -328,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Event Listeners
+    elements.rollD8Btn.addEventListener('click', handleD8Roll);
     elements.rollD20Btn.addEventListener('click', handleD20Roll);
     elements.rollD4Btn.addEventListener('click', handleD4Roll);
     elements.balanceBtn.addEventListener('click', handleBalance);
@@ -340,11 +374,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        if (e.key === '8' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            elements.rollD8Btn.click();
+        }
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (!elements.rollD4Btn.disabled) {
                 elements.rollD4Btn.click();
-            } else {
+            } else if (!elements.rollD20Btn.disabled) {
                 elements.rollD20Btn.click();
             }
         }
@@ -363,11 +401,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialization
     addLogEntry('🎲 Welcome to the Dungeon Cartographer!', 'info');
+    addLogEntry('📖 Press "8" or click "Roll D8" to set difficulty!', 'info');
     addLogEntry('⭐ START room at (0, 0) - Always visible!', 'start');
-    addLogEntry('📖 Roll D20 → get charges → roll D4 → place rooms', 'info');
-    addLogEntry('🎯 Features appear randomly during placement!', 'info');
+    addLogEntry('📖 Then roll D20 → get charges → roll D4 → place rooms', 'info');
+    addLogEntry('🎯 Features appear based on difficulty level!', 'info');
     addLogEntry('⚖️ Press "Balance" or "B" to balance features', 'info');
-    addLogEntry('💡 Enter = Roll | Ctrl+Z = Undo | R = Reset', 'info');
+    addLogEntry('💡 8 = Difficulty | Enter = Roll | Ctrl+Z = Undo | R = Reset', 'info');
+    
+    // Set initial difficulty
+    const initialDiff = mapGenerator.setDifficulty(3);
+    currentD8Roll = 3;
+    elements.d8Display.textContent = '3';
+    elements.difficultyDisplay.textContent = initialDiff.name;
+    elements.difficultyDisplay.style.color = initialDiff.color;
     
     currentMap = new Map(mapGenerator.rooms);
     updateUI();

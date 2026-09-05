@@ -8,20 +8,22 @@
 </head>
 <body>
     <div id="app">
-        <!-- Header -->
         <header>
             <h1>🗺️ Dungeon Cartographer</h1>
         </header>
 
-        <!-- Main Map Area -->
         <div id="map-container">
             <div id="dungeon-grid"></div>
         </div>
 
-        <!-- Bottom Panel -->
         <div id="bottom-panel">
             <!-- Dice Info -->
             <div class="dice-info">
+                <div class="dice-box">
+                    <span class="dice-label">🎲 D8</span>
+                    <span class="dice-value" id="d8Display">3</span>
+                    <span class="dice-status" id="d8Status">Difficulty</span>
+                </div>
                 <div class="dice-box">
                     <span class="dice-label">🎲 D20</span>
                     <span class="dice-value" id="d20Display">-</span>
@@ -49,6 +51,12 @@
                 </div>
             </div>
 
+            <!-- Difficulty Display -->
+            <div class="difficulty-display">
+                <span class="difficulty-label">⚔️ Difficulty:</span>
+                <span class="difficulty-value" id="difficultyDisplay">Normal</span>
+            </div>
+
             <!-- Feature Stats -->
             <div class="feature-stats" id="featureStats">
                 <span style="color: #666;">No features yet</span>
@@ -56,10 +64,11 @@
 
             <!-- Action Buttons -->
             <div class="controls">
-                <button id="rollD20Btn" class="btn btn-primary">🎲 Roll D20</button>
-                <button id="rollD4Btn" class="btn btn-secondary" disabled>🎲 Roll D4</button>
-                <button id="balanceBtn" class="btn btn-info">⚖️ Balance</button>
-                <button id="undoBtn" class="btn btn-warning">↩️ Undo</button>
+                <button id="rollD8Btn" class="btn btn-primary">🎲 Roll D8</button>
+                <button id="rollD20Btn" class="btn btn-secondary">🎲 Roll D20</button>
+                <button id="rollD4Btn" class="btn btn-info" disabled>🎲 Roll D4</button>
+                <button id="balanceBtn" class="btn btn-warning">⚖️ Balance</button>
+                <button id="undoBtn" class="btn btn-danger">↩️ Undo</button>
                 <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
                 <button id="printBtn" class="btn btn-success">🖨️ Print</button>
             </div>

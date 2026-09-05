@@ -1,34 +1,146 @@
 /**
- * Dungeon Cartographer - Hybrid System with Custom Rules
- * - No shops (or <1% chance)
- * - Bosses far from entrance (minimum 5 rooms away)
+ * Dungeon Cartographer - Difficulty System
+ * D8 determines dungeon difficulty and monster density
  */
 
 class DungeonMapGenerator {
     constructor() {
+        this.difficultyConfig = {
+            1: { // Very Easy
+                name: 'Very Easy',
+                color: '#44ff44',
+                maxMonsters: 1,
+                bossCount: 0,
+                treasureMin: 1,
+                treasureMax: 2,
+                trapMin: 0,
+                trapMax: 1,
+                bossMinDistance: 8,
+                shopChance: 0,
+                emptyRoomChance: 60
+            },
+            2: { // Easy
+                name: 'Easy',
+                color: '#88ff88',
+                maxMonsters: 2,
+                bossCount: 0,
+                treasureMin: 2,
+                treasureMax: 3,
+                trapMin: 1,
+                trapMax: 2,
+                bossMinDistance: 7,
+                shopChance: 5,
+                emptyRoomChance: 40
+            },
+            3: { // Normal
+                name: 'Normal',
+                color: '#ffff44',
+                maxMonsters: 3,
+                bossCount: 0,
+                treasureMin: 2,
+                treasureMax: 3,
+                trapMin: 2,
+                trapMax: 3,
+                bossMinDistance: 6,
+                shopChance: 10,
+                emptyRoomChance: 30
+            },
+            4: { // Normal+
+                name: 'Normal+',
+                color: '#ffaa44',
+                maxMonsters: 4,
+                bossCount: 1,
+                treasureMin: 3,
+                treasureMax: 4,
+                trapMin: 2,
+                trapMax: 3,
+                bossMinDistance: 6,
+                shopChance: 10,
+                emptyRoomChance: 25
+            },
+            5: { // Hard
+                name: 'Hard',
+                color: '#ff6644',
+                maxMonsters: 4,
+                bossCount: 1,
+                treasureMin: 3,
+                treasureMax: 4,
+                trapMin: 3,
+                trapMax: 4,
+                bossMinDistance: 5,
+                shopChance: 8,
+                emptyRoomChance: 20
+            },
+            6: { // Hard+
+                name: 'Hard+',
+                color: '#ff4444',
+                maxMonsters: 5,
+                bossCount: 1,
+                treasureMin: 4,
+                treasureMax: 5,
+                trapMin: 3,
+                trapMax: 4,
+                bossMinDistance: 5,
+                shopChance: 8,
+                emptyRoomChance: 15
+            },
+            7: { // Very Hard
+                name: 'Very Hard',
+                color: '#cc2244',
+                maxMonsters: 5,
+                bossCount: 2,
+                treasureMin: 4,
+                treasureMax: 5,
+                trapMin: 4,
+                trapMax: 5,
+                bossMinDistance: 4,
+                shopChance: 5,
+                emptyRoomChance: 10
+            },
+            8: { // Deadly
+                name: '💀 Deadly',
+                color: '#ff0044',
+                maxMonsters: 6,
+                bossCount: 3,
+                treasureMin: 5,
+                treasureMax: 7,
+                trapMin: 5,
+                trapMax: 6,
+                bossMinDistance: 3,
+                shopChance: 5,
+                emptyRoomChance: 5
+            }
+        };
+        
+        this.difficulty = 3; // Default: Normal
         this.featureConfig = {
             placementChances: {
                 treasure: { min: 2, max: 5, icon: '💰', label: 'TREASURE' },
                 trap: { min: 6, max: 9, icon: '⚠️', label: 'TRAP' },
                 monster: { min: 10, max: 13, icon: '👹', label: 'MONSTER' },
                 puzzle: { min: 14, max: 16, icon: '🧩', label: 'PUZZLE' },
-                // Shop is now extremely rare - only on D20 = 18
                 shop: { min: 18, max: 18, icon: '🏪', label: 'SHOP' },
-                // Boss is more rare and will be placed by distance check
                 boss: { min: 19, max: 19, icon: '👑', label: 'BOSS' }
             },
-            balancing: {
-                treasure: 20,
-                trap: 18,
-                monster: 25,
-                puzzle: 15,
-                shop: 0,      // No shops in balancing
-                boss: 5       // 5% boss rooms
-            },
-            bossMinDistance: 5 // Minimum rooms from start for boss
+            bossMinDistance: 5
         };
         this.reset();
         this.roomDistanceCache = new Map();
+    }
+
+    setDifficulty(d8Value) {
+        const validValues = [1, 2, 3, 4, 5, 6, 7, 8];
+        if (!validValues.includes(d8Value)) {
+            d8Value = 3; // Default to Normal
+        }
+        this.difficulty = d8Value;
+        const config = this.difficultyConfig[d8Value];
+        this.featureConfig.bossMinDistance = config.bossMinDistance;
+        return config;
+    }
+
+    getCurrentDifficulty() {
+        return this.difficultyConfig[this.difficulty] || this.difficultyConfig[3];
     }
 
     reset() {
@@ -40,6 +152,7 @@ class DungeonMapGenerator {
         this.charges = 0;
         this.d20Rolls = [];
         this.d4Rolls = [];
+        this.d8Roll = this.difficulty;
         this.currentD20 = null;
         this.currentD4 = null;
         this.featuresApplied = [];
@@ -94,7 +207,17 @@ class DungeonMapGenerator {
         };
     }
 
-    // Calculate Manhattan distance from start (0,0)
+    // Roll D8 for difficulty
+    rollForDifficulty() {
+        const d8 = this.rollDice(8);
+        const config = this.setDifficulty(d8);
+        return {
+            roll: d8,
+            config: config,
+            name: config.name
+        };
+    }
+
     calculateDistance(x, y) {
         return Math.abs(x) + Math.abs(y);
     }
@@ -107,13 +230,11 @@ class DungeonMapGenerator {
         }
     }
 
-    // Check if a position is valid for boss placement
     isValidBossPosition(key) {
         const distance = this.roomDistanceCache.get(key) || 0;
         return distance >= this.featureConfig.bossMinDistance;
     }
 
-    // Get rooms that are far enough from start
     getDistantRooms(minDistance) {
         const result = [];
         for (const [key, room] of this.rooms) {
@@ -127,21 +248,31 @@ class DungeonMapGenerator {
     }
 
     checkForFeature(x, y) {
+        const diffConfig = this.difficultyConfig[this.difficulty];
         const roll = this.rollDice(20);
         const config = this.featureConfig.placementChances;
         const key = `${x},${y}`;
         const distance = this.calculateDistance(x, y);
         
+        // Check empty room chance based on difficulty
+        if (this.rollDice(100) <= diffConfig.emptyRoomChance) {
+            return null; // Empty room
+        }
+        
         // Boss check - only if far enough from start
         if (roll >= config.boss.min && roll <= config.boss.max) {
             if (distance >= this.featureConfig.bossMinDistance) {
-                return {
-                    type: 'boss',
-                    icon: config.boss.icon,
-                    label: config.boss.label.toUpperCase()
-                };
+                // Check if we've reached max bosses for this difficulty
+                const currentBosses = this.featureStats.boss || 0;
+                if (currentBosses < diffConfig.bossCount) {
+                    return {
+                        type: 'boss',
+                        icon: config.boss.icon,
+                        label: config.boss.label.toUpperCase()
+                    };
+                }
             }
-            // Boss roll but too close - convert to monster instead
+            // Boss roll but too close or max reached - convert to monster
             return {
                 type: 'monster',
                 icon: '👹',
@@ -149,35 +280,79 @@ class DungeonMapGenerator {
             };
         }
         
-        // Shop check - extremely rare (only on exact roll 18)
-        // But if shop is rolled, 90% chance it becomes a treasure instead
+        // Shop check - based on difficulty shop chance
         if (roll >= config.shop.min && roll <= config.shop.max) {
-            if (this.rollDice(100) <= 90) {
-                // Convert to treasure (90% chance)
+            const shopChance = diffConfig.shopChance;
+            if (this.rollDice(100) <= shopChance) {
                 return {
-                    type: 'treasure',
-                    icon: '💰',
-                    label: 'TREASURE'
+                    type: 'shop',
+                    icon: config.shop.icon,
+                    label: config.shop.label.toUpperCase()
                 };
             }
+            // Convert to treasure
             return {
-                type: 'shop',
-                icon: config.shop.icon,
-                label: config.shop.label.toUpperCase()
+                type: 'treasure',
+                icon: '💰',
+                label: 'TREASURE'
             };
         }
         
-        // Other features
-        for (const [type, range] of Object.entries(config)) {
-            if (type === 'boss' || type === 'shop') continue;
-            if (roll >= range.min && roll <= range.max) {
+        // Monster check - limit based on difficulty
+        if (roll >= config.monster.min && roll <= config.monster.max) {
+            const currentMonsters = this.featureStats.monster || 0;
+            if (currentMonsters < diffConfig.maxMonsters) {
                 return {
-                    type: type,
-                    icon: range.icon,
-                    label: range.label.toUpperCase()
+                    type: 'monster',
+                    icon: config.monster.icon,
+                    label: config.monster.label.toUpperCase()
                 };
             }
+            // Too many monsters - become empty or treasure
+            return this.rollDice(2) === 1 ? null : {
+                type: 'treasure',
+                icon: '💰',
+                label: 'TREASURE'
+            };
         }
+        
+        // Treasure check - limit based on difficulty
+        if (roll >= config.treasure.min && roll <= config.treasure.max) {
+            const currentTreasure = this.featureStats.treasure || 0;
+            const maxTreasure = diffConfig.treasureMax;
+            if (currentTreasure < maxTreasure) {
+                return {
+                    type: 'treasure',
+                    icon: config.treasure.icon,
+                    label: config.treasure.label.toUpperCase()
+                };
+            }
+            return null;
+        }
+        
+        // Trap check - limit based on difficulty
+        if (roll >= config.trap.min && roll <= config.trap.max) {
+            const currentTraps = this.featureStats.trap || 0;
+            const maxTraps = diffConfig.trapMax;
+            if (currentTraps < maxTraps) {
+                return {
+                    type: 'trap',
+                    icon: config.trap.icon,
+                    label: config.trap.label.toUpperCase()
+                };
+            }
+            return null;
+        }
+        
+        // Puzzle check
+        if (roll >= config.puzzle.min && roll <= config.puzzle.max) {
+            return {
+                type: 'puzzle',
+                icon: config.puzzle.icon,
+                label: config.puzzle.label.toUpperCase()
+            };
+        }
+        
         return null;
     }
 
@@ -223,7 +398,6 @@ class DungeonMapGenerator {
             this.featuresApplied.push({ key, ...feature });
             featureMessage = ` 🎯 ${feature.label}`;
             
-            // Extra message for boss placement
             if (feature.type === 'boss') {
                 const dist = this.roomDistanceCache.get(key);
                 featureMessage += ` (${dist} rooms from start)`;
@@ -253,6 +427,7 @@ class DungeonMapGenerator {
     }
 
     balanceDungeon() {
+        const diffConfig = this.difficultyConfig[this.difficulty];
         const totalRooms = this.rooms.size - 1;
         if (totalRooms < 5) {
             return { 
@@ -261,16 +436,24 @@ class DungeonMapGenerator {
             };
         }
 
-        const config = this.featureConfig.balancing;
-        const targetCounts = {};
-        let totalTarget = 0;
-        
-        // Calculate targets (excluding shop)
-        for (const [type, percentage] of Object.entries(config)) {
-            if (percentage === 0) continue;
-            targetCounts[type] = Math.max(1, Math.floor((percentage / 100) * totalRooms));
-            totalTarget += targetCounts[type];
-        }
+        // Calculate target counts based on difficulty
+        const targetCounts = {
+            treasure: Math.min(
+                Math.floor(totalRooms * 0.2),
+                diffConfig.treasureMax
+            ),
+            trap: Math.min(
+                Math.floor(totalRooms * 0.18),
+                diffConfig.trapMax
+            ),
+            monster: Math.min(
+                Math.floor(totalRooms * 0.25),
+                diffConfig.maxMonsters
+            ),
+            puzzle: Math.floor(totalRooms * 0.12),
+            boss: diffConfig.bossCount,
+            shop: 0
+        };
 
         // Get rooms without features that are far enough from start
         const availableRooms = [];
@@ -286,11 +469,9 @@ class DungeonMapGenerator {
 
         let added = 0;
         const addedFeatures = [];
-        const featureTypes = ['treasure', 'trap', 'monster', 'puzzle', 'boss'];
         
         // First, try to place bosses in farthest rooms
         const bossTarget = targetCounts.boss || 0;
-        let bossPlaced = 0;
         const bossCandidates = availableRooms.filter(r => r.distance >= this.featureConfig.bossMinDistance);
         
         for (let i = 0; i < Math.min(bossTarget, bossCandidates.length); i++) {
@@ -304,19 +485,22 @@ class DungeonMapGenerator {
                 room.color = 'has-boss';
                 this.featureStats.boss = (this.featureStats.boss || 0) + 1;
                 added++;
-                bossPlaced++;
-                addedFeatures.push({ key: candidate.key, type: 'boss', ...featureData, distance: candidate.distance });
+                addedFeatures.push({ 
+                    key: candidate.key, 
+                    type: 'boss', 
+                    ...featureData, 
+                    distance: candidate.distance 
+                });
             }
         }
 
-        // Then place other features
-        const remainingRooms = availableRooms.filter(r => {
-            const room = this.rooms.get(r.key);
-            return room && !room.featureType;
-        });
+        // Remove used candidates
+        const usedKeys = addedFeatures.map(f => f.key);
+        const remainingRooms = availableRooms.filter(r => !usedKeys.includes(r.key));
 
+        // Place other features
+        const featureTypes = ['treasure', 'trap', 'monster', 'puzzle'];
         for (const type of featureTypes) {
-            if (type === 'boss') continue; // Already handled
             const target = targetCounts[type] || 0;
             const current = this.featureStats[type] || 0;
             const needed = Math.max(0, target - current);
@@ -337,42 +521,14 @@ class DungeonMapGenerator {
             }
         }
 
-        // If we still have rooms left, place random features
-        const stillEmpty = [];
-        for (const [key, room] of this.rooms) {
-            if (room.type !== 'start' && !room.featureType) {
-                stillEmpty.push(key);
-            }
-        }
-
-        if (stillEmpty.length > 0 && added < 3) {
-            const shuffled = this.shuffleArray(stillEmpty);
-            const types = ['treasure', 'trap', 'monster'];
-            for (let i = 0; i < Math.min(3, shuffled.length); i++) {
-                const roomKey = shuffled[i];
-                const room = this.rooms.get(roomKey);
-                if (room) {
-                    const type = types[i % types.length];
-                    const featureData = this.getFeatureData(type);
-                    room.icon = featureData.icon;
-                    room.label = featureData.label;
-                    room.featureType = type;
-                    room.color = `has-${type}`;
-                    this.featureStats[type] = (this.featureStats[type] || 0) + 1;
-                    added++;
-                    addedFeatures.push({ key: roomKey, type, ...featureData });
-                }
-            }
-        }
-
         return {
             success: true,
-            message: `Balanced dungeon: added ${added} features${bossPlaced > 0 ? ` (${bossPlaced} bosses in distant rooms)` : ''}`,
+            message: `Balanced ${diffConfig.name} dungeon: added ${added} features`,
             added: added,
-            bossPlaced: bossPlaced,
             addedFeatures: addedFeatures,
             stats: this.featureStats,
-            targets: targetCounts
+            targets: targetCounts,
+            difficulty: diffConfig
         };
     }
 
@@ -499,6 +655,8 @@ class DungeonMapGenerator {
             charges: this.charges,
             d20Rolls: this.d20Rolls,
             d4Rolls: this.d4Rolls,
+            d8Roll: this.d8Roll,
+            difficulty: this.difficultyConfig[this.difficulty],
             currentPos: this.currentPos,
             startRoom: this.getStartRoom(),
             features: this.featuresApplied,
