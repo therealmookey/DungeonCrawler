@@ -1,29 +1,34 @@
 /**
- * Dungeon Cartographer - Hybrid System
- * Dice during placement + balancing pass
+ * Dungeon Cartographer - Hybrid System with Custom Rules
+ * - No shops (or <1% chance)
+ * - Bosses far from entrance (minimum 5 rooms away)
  */
 
 class DungeonMapGenerator {
     constructor() {
         this.featureConfig = {
             placementChances: {
-                treasure: { min: 2, max: 4, icon: '💰', label: 'TREASURE' },
-                trap: { min: 5, max: 7, icon: '⚠️', label: 'TRAP' },
-                monster: { min: 8, max: 10, icon: '👹', label: 'MONSTER' },
-                puzzle: { min: 11, max: 13, icon: '🧩', label: 'PUZZLE' },
-                shop: { min: 14, max: 15, icon: '🏪', label: 'SHOP' },
-                boss: { min: 16, max: 17, icon: '👑', label: 'BOSS' }
+                treasure: { min: 2, max: 5, icon: '💰', label: 'TREASURE' },
+                trap: { min: 6, max: 9, icon: '⚠️', label: 'TRAP' },
+                monster: { min: 10, max: 13, icon: '👹', label: 'MONSTER' },
+                puzzle: { min: 14, max: 16, icon: '🧩', label: 'PUZZLE' },
+                // Shop is now extremely rare - only on D20 = 18
+                shop: { min: 18, max: 18, icon: '🏪', label: 'SHOP' },
+                // Boss is more rare and will be placed by distance check
+                boss: { min: 19, max: 19, icon: '👑', label: 'BOSS' }
             },
             balancing: {
                 treasure: 20,
-                trap: 15,
+                trap: 18,
                 monster: 25,
-                puzzle: 12,
-                shop: 8,
-                boss: 5
-            }
+                puzzle: 15,
+                shop: 0,      // No shops in balancing
+                boss: 5       // 5% boss rooms
+            },
+            bossMinDistance: 5 // Minimum rooms from start for boss
         };
         this.reset();
+        this.roomDistanceCache = new Map();
     }
 
     reset() {
@@ -46,10 +51,12 @@ class DungeonMapGenerator {
             shop: 0,
             boss: 0
         };
+        this.roomDistanceCache = new Map();
         
         this.addRoom(0, 0, 'start', '🏠', 'START');
         this.currentPos = { x: 0, y: 0 };
         this.addHistory('start', { x: 0, y: 0 });
+        this.calculateAllDistances();
     }
 
     rollDice(sides) {
@@ -87,11 +94,82 @@ class DungeonMapGenerator {
         };
     }
 
-    checkForFeature() {
+    // Calculate Manhattan distance from start (0,0)
+    calculateDistance(x, y) {
+        return Math.abs(x) + Math.abs(y);
+    }
+
+    calculateAllDistances() {
+        this.roomDistanceCache.clear();
+        for (const [key, room] of this.rooms) {
+            const dist = this.calculateDistance(room.x, room.y);
+            this.roomDistanceCache.set(key, dist);
+        }
+    }
+
+    // Check if a position is valid for boss placement
+    isValidBossPosition(key) {
+        const distance = this.roomDistanceCache.get(key) || 0;
+        return distance >= this.featureConfig.bossMinDistance;
+    }
+
+    // Get rooms that are far enough from start
+    getDistantRooms(minDistance) {
+        const result = [];
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'start') continue;
+            const dist = this.calculateDistance(room.x, room.y);
+            if (dist >= minDistance && !room.featureType) {
+                result.push({ key, room, distance: dist });
+            }
+        }
+        return result.sort((a, b) => b.distance - a.distance);
+    }
+
+    checkForFeature(x, y) {
         const roll = this.rollDice(20);
         const config = this.featureConfig.placementChances;
+        const key = `${x},${y}`;
+        const distance = this.calculateDistance(x, y);
         
+        // Boss check - only if far enough from start
+        if (roll >= config.boss.min && roll <= config.boss.max) {
+            if (distance >= this.featureConfig.bossMinDistance) {
+                return {
+                    type: 'boss',
+                    icon: config.boss.icon,
+                    label: config.boss.label.toUpperCase()
+                };
+            }
+            // Boss roll but too close - convert to monster instead
+            return {
+                type: 'monster',
+                icon: '👹',
+                label: 'MONSTER'
+            };
+        }
+        
+        // Shop check - extremely rare (only on exact roll 18)
+        // But if shop is rolled, 90% chance it becomes a treasure instead
+        if (roll >= config.shop.min && roll <= config.shop.max) {
+            if (this.rollDice(100) <= 90) {
+                // Convert to treasure (90% chance)
+                return {
+                    type: 'treasure',
+                    icon: '💰',
+                    label: 'TREASURE'
+                };
+            }
+            return {
+                type: 'shop',
+                icon: config.shop.icon,
+                label: config.shop.label.toUpperCase()
+            };
+        }
+        
+        // Other features
         for (const [type, range] of Object.entries(config)) {
+            if (type === 'boss' || type === 'shop') continue;
             if (roll >= range.min && roll <= range.max) {
                 return {
                     type: type,
@@ -130,8 +208,11 @@ class DungeonMapGenerator {
         this.addRoom(newX, newY, 'room', '⬜', '');
         const room = this.rooms.get(key);
         
+        // Update distance cache
+        this.roomDistanceCache.set(key, this.calculateDistance(newX, newY));
+        
         // Check for feature
-        const feature = this.checkForFeature();
+        const feature = this.checkForFeature(newX, newY);
         let featureMessage = '';
         if (feature) {
             room.icon = feature.icon;
@@ -141,6 +222,12 @@ class DungeonMapGenerator {
             this.featureStats[feature.type] = (this.featureStats[feature.type] || 0) + 1;
             this.featuresApplied.push({ key, ...feature });
             featureMessage = ` 🎯 ${feature.label}`;
+            
+            // Extra message for boss placement
+            if (feature.type === 'boss') {
+                const dist = this.roomDistanceCache.get(key);
+                featureMessage += ` (${dist} rooms from start)`;
+            }
         }
 
         this.currentPos = { x: newX, y: newY };
@@ -167,10 +254,10 @@ class DungeonMapGenerator {
 
     balanceDungeon() {
         const totalRooms = this.rooms.size - 1;
-        if (totalRooms < 3) {
+        if (totalRooms < 5) {
             return { 
                 success: false, 
-                message: 'Too few rooms to balance (need at least 3)' 
+                message: 'Too few rooms to balance (need at least 5)' 
             };
         }
 
@@ -178,41 +265,66 @@ class DungeonMapGenerator {
         const targetCounts = {};
         let totalTarget = 0;
         
+        // Calculate targets (excluding shop)
         for (const [type, percentage] of Object.entries(config)) {
+            if (percentage === 0) continue;
             targetCounts[type] = Math.max(1, Math.floor((percentage / 100) * totalRooms));
             totalTarget += targetCounts[type];
         }
 
-        // Find rooms without features
+        // Get rooms without features that are far enough from start
         const availableRooms = [];
         for (const [key, room] of this.rooms) {
             if (room.type !== 'start' && !room.featureType) {
-                availableRooms.push(key);
+                const dist = this.roomDistanceCache.get(key) || 0;
+                availableRooms.push({ key, room, distance: dist });
             }
         }
 
-        // Also find rooms that could be converted (if we need more space)
-        const allNonStartRooms = [];
-        for (const [key, room] of this.rooms) {
-            if (room.type !== 'start') {
-                allNonStartRooms.push(key);
-            }
-        }
+        // Sort by distance from start (farthest first for bosses)
+        availableRooms.sort((a, b) => b.distance - a.distance);
 
-        const shuffled = this.shuffleArray(availableRooms);
-        let index = 0;
         let added = 0;
         const addedFeatures = [];
+        const featureTypes = ['treasure', 'trap', 'monster', 'puzzle', 'boss'];
+        
+        // First, try to place bosses in farthest rooms
+        const bossTarget = targetCounts.boss || 0;
+        let bossPlaced = 0;
+        const bossCandidates = availableRooms.filter(r => r.distance >= this.featureConfig.bossMinDistance);
+        
+        for (let i = 0; i < Math.min(bossTarget, bossCandidates.length); i++) {
+            const candidate = bossCandidates[i];
+            const room = this.rooms.get(candidate.key);
+            if (room && !room.featureType) {
+                const featureData = this.getFeatureData('boss');
+                room.icon = featureData.icon;
+                room.label = featureData.label;
+                room.featureType = 'boss';
+                room.color = 'has-boss';
+                this.featureStats.boss = (this.featureStats.boss || 0) + 1;
+                added++;
+                bossPlaced++;
+                addedFeatures.push({ key: candidate.key, type: 'boss', ...featureData, distance: candidate.distance });
+            }
+        }
 
-        // First pass: add to empty rooms
-        for (const [type, target] of Object.entries(targetCounts)) {
+        // Then place other features
+        const remainingRooms = availableRooms.filter(r => {
+            const room = this.rooms.get(r.key);
+            return room && !room.featureType;
+        });
+
+        for (const type of featureTypes) {
+            if (type === 'boss') continue; // Already handled
+            const target = targetCounts[type] || 0;
             const current = this.featureStats[type] || 0;
             const needed = Math.max(0, target - current);
             
-            for (let i = 0; i < needed && index < shuffled.length; i++) {
-                const roomKey = shuffled[index++];
-                const room = this.rooms.get(roomKey);
-                if (room && room.type !== 'start' && !room.featureType) {
+            for (let i = 0; i < needed && i < remainingRooms.length; i++) {
+                const candidate = remainingRooms[i];
+                const room = this.rooms.get(candidate.key);
+                if (room && !room.featureType) {
                     const featureData = this.getFeatureData(type);
                     room.icon = featureData.icon;
                     room.label = featureData.label;
@@ -220,27 +332,27 @@ class DungeonMapGenerator {
                     room.color = `has-${type}`;
                     this.featureStats[type] = (this.featureStats[type] || 0) + 1;
                     added++;
-                    addedFeatures.push({ key: roomKey, type, ...featureData });
+                    addedFeatures.push({ key: candidate.key, type, ...featureData });
                 }
             }
         }
 
-        // Second pass: if we still need more, convert existing rooms
-        if (added < 3 && allNonStartRooms.length > 0) {
-            const remaining = allNonStartRooms.filter(k => {
-                const room = this.rooms.get(k);
-                return room && room.type !== 'start' && !room.featureType;
-            });
-            
-            const shuffledRemaining = this.shuffleArray(remaining);
-            for (let i = 0; i < Math.min(3 - added, shuffledRemaining.length); i++) {
-                const roomKey = shuffledRemaining[i];
+        // If we still have rooms left, place random features
+        const stillEmpty = [];
+        for (const [key, room] of this.rooms) {
+            if (room.type !== 'start' && !room.featureType) {
+                stillEmpty.push(key);
+            }
+        }
+
+        if (stillEmpty.length > 0 && added < 3) {
+            const shuffled = this.shuffleArray(stillEmpty);
+            const types = ['treasure', 'trap', 'monster'];
+            for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+                const roomKey = shuffled[i];
                 const room = this.rooms.get(roomKey);
                 if (room) {
-                    // Pick a random feature type that's underrepresented
-                    const sortedTypes = Object.entries(this.featureStats)
-                        .sort((a, b) => a[1] - b[1]);
-                    const type = sortedTypes[0][0];
+                    const type = types[i % types.length];
                     const featureData = this.getFeatureData(type);
                     room.icon = featureData.icon;
                     room.label = featureData.label;
@@ -255,8 +367,9 @@ class DungeonMapGenerator {
 
         return {
             success: true,
-            message: `Balanced dungeon: added ${added} features`,
+            message: `Balanced dungeon: added ${added} features${bossPlaced > 0 ? ` (${bossPlaced} bosses in distant rooms)` : ''}`,
             added: added,
+            bossPlaced: bossPlaced,
             addedFeatures: addedFeatures,
             stats: this.featureStats,
             targets: targetCounts
@@ -322,6 +435,7 @@ class DungeonMapGenerator {
                     this.featuresApplied = this.featuresApplied.filter(f => f.key !== key);
                 }
                 this.rooms.delete(key);
+                this.roomDistanceCache.delete(key);
                 const prev = this.history[this.history.length - 1];
                 if (prev) {
                     this.currentPos = { x: prev.data.x || 0, y: prev.data.y || 0 };
@@ -369,9 +483,17 @@ class DungeonMapGenerator {
         return this.featuresApplied;
     }
 
+    getRoomDistance(key) {
+        return this.roomDistanceCache.get(key) || 0;
+    }
+
     exportMapData() {
         return {
-            rooms: Array.from(this.rooms.entries()).map(([key, room]) => ({ key, ...room })),
+            rooms: Array.from(this.rooms.entries()).map(([key, room]) => ({ 
+                key, 
+                ...room,
+                distanceFromStart: this.roomDistanceCache.get(key) || 0
+            })),
             totalRooms: this.rooms.size,
             depth: this.depth,
             charges: this.charges,
