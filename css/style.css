@@ -192,7 +192,7 @@ header h1 {
 }
 
 /* ============================================
-   DUNGEON GRID - Classic Map Style
+   DUNGEON GRID - Classic Map Style - NO GAPS
    ============================================ */
 #dungeon-grid {
     display: grid;
@@ -204,7 +204,7 @@ header h1 {
 }
 
 /* ============================================
-   CELL STYLES - Classic Dungeon Map
+   CELL STYLES - Classic Dungeon Map - NO GAPS
    ============================================ */
 .cell {
     width: 60px;
@@ -221,6 +221,9 @@ header h1 {
     position: relative;
     box-sizing: border-box;
     font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
 }
 
 /* ============================================
@@ -231,6 +234,8 @@ header h1 {
     border: none;
     position: relative;
     overflow: hidden;
+    margin: 0;
+    padding: 0;
 }
 
 /* Diagonal hatching pattern for walls */
@@ -270,12 +275,14 @@ header h1 {
 }
 
 /* ============================================
-   ROOM STYLES - Thick Borders
+   ROOM STYLES - Thick Borders - NO GAPS
    ============================================ */
 .cell-room {
     background: #f0e8d8;
     border: 3px solid #4a3a2a;
     position: relative;
+    margin: 0;
+    padding: 0;
 }
 
 .cell-room .icon {
@@ -1026,7 +1033,7 @@ header h1 {
 }
 
 /* ============================================
-   RESPONSIVE
+   RESPONSIVE - NO GAPS AT ALL SIZES
    ============================================ */
 @media (max-width: 1200px) {
     #stats-panel {
@@ -1044,6 +1051,8 @@ header h1 {
     .cell {
         width: 48px;
         height: 48px;
+        margin: 0;
+        padding: 0;
     }
     
     .cell .icon {
@@ -1134,6 +1143,8 @@ header h1 {
     .cell {
         width: 42px;
         height: 42px;
+        margin: 0;
+        padding: 0;
     }
     
     .cell .icon {
@@ -1200,6 +1211,8 @@ header h1 {
     .cell {
         width: 36px;
         height: 36px;
+        margin: 0;
+        padding: 0;
     }
     
     .cell .icon {
@@ -1290,6 +1303,8 @@ header h1 {
     .cell {
         width: 30px;
         height: 30px;
+        margin: 0;
+        padding: 0;
     }
     
     .cell .icon {
@@ -1412,7 +1427,7 @@ header h1 {
 }
 
 /* ============================================
-   PRINT STYLES - Classic Map Print
+   PRINT STYLES - Classic Map Print - NO GAPS
    ============================================ */
 @media print {
     html, body {
@@ -1461,11 +1476,14 @@ header h1 {
         border: 4px solid #333;
         box-shadow: none;
         background: #f5edd8;
+        gap: 0;
     }
 
     .cell {
         width: 50px;
         height: 50px;
+        margin: 0;
+        padding: 0;
         border: 2px solid #333;
         background: #f5edd8;
         print-color-adjust: exact;
@@ -1475,6 +1493,8 @@ header h1 {
     .cell-wall {
         background: transparent !important;
         border: none !important;
+        margin: 0;
+        padding: 0;
     }
 
     .cell-wall::before {
@@ -1518,6 +1538,8 @@ header h1 {
     .cell-room {
         background: #f5edd8 !important;
         border: 2px solid #333 !important;
+        margin: 0;
+        padding: 0;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
