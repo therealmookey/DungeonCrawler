@@ -1,5 +1,6 @@
 /**
  * Dungeon Cartographer - Interactive Tutorial
+ * With Spacebar/Enter indicator
  */
 
 class TutorialManager {
@@ -35,6 +36,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.showOverlay(true);
                     this.hideTooltip();
+                    this.updateProgress();
                 }
             },
             {
@@ -47,6 +49,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#rollD8Btn');
                     this.showTooltip('#rollD8Btn', '🎲 D8', 'Press <kbd>8</kbd> or click this button to roll for difficulty.', '8');
+                    this.updateProgress();
                 }
             },
             {
@@ -59,6 +62,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#rollD20Btn');
                     this.showTooltip('#rollD20Btn', '🎲 D20', 'Press <kbd>Enter</kbd> or click to roll for charges.', 'Enter');
+                    this.updateProgress();
                 }
             },
             {
@@ -71,6 +75,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#rollD4Btn');
                     this.showTooltip('#rollD4Btn', '🎲 D4', 'Press <kbd>Enter</kbd> or click to place a room.', 'Enter');
+                    this.updateProgress();
                 }
             },
             {
@@ -83,6 +88,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#featureStats');
                     this.showTooltip('#featureStats', '🎯 Features', 'Room features appear randomly based on difficulty and dice rolls.');
+                    this.updateProgress();
                 }
             },
             {
@@ -95,6 +101,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#placeObjectiveBtn');
                     this.showTooltip('#placeObjectiveBtn', '⭐ Goal', 'Press <kbd>G</kbd> or click to place the dungeon goal.', 'G');
+                    this.updateProgress();
                 }
             },
             {
@@ -107,6 +114,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#balanceBtn');
                     this.showTooltip('#balanceBtn', '⚖️ Balance', 'Press <kbd>B</kbd> or click to balance dungeon features.', 'B');
+                    this.updateProgress();
                 }
             },
             {
@@ -119,6 +127,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#undoBtn');
                     this.showTooltip('#undoBtn', '↩️ Undo', 'Press <kbd>Ctrl+Z</kbd> or click to undo.', 'Ctrl+Z');
+                    this.updateProgress();
                 }
             },
             {
@@ -131,6 +140,7 @@ class TutorialManager {
                 onEnter: () => {
                     this.highlightElement('#printBtn');
                     this.showTooltip('#printBtn', '🖨️ Print', 'Click to print your dungeon map.');
+                    this.updateProgress();
                 }
             },
             {
@@ -144,6 +154,7 @@ class TutorialManager {
                     this.showOverlay(true);
                     this.hideTooltip();
                     this.clearHighlights();
+                    this.updateProgress();
                 }
             }
         ];
@@ -168,7 +179,9 @@ class TutorialManager {
         // Keyboard shortcuts for tutorial
         document.addEventListener('keydown', (e) => {
             if (!this.isActive) return;
-            if (e.key === 'Enter' || e.key === ' ') {
+            
+            // Space or Enter to advance
+            if (e.key === ' ' || e.key === 'Space' || e.key === 'Enter') {
                 e.preventDefault();
                 this.next();
             }
@@ -224,6 +237,7 @@ class TutorialManager {
             document.querySelector('#tutorial-content p').innerHTML = step.description;
             this.nextBtn.textContent = step.nextText || 'Next →';
             this.skipBtn.style.display = step.skipable ? 'inline-block' : 'none';
+            this.updateProgressIndicator();
         }
 
         // Call onEnter
@@ -237,6 +251,51 @@ class TutorialManager {
 
     showOverlay(show) {
         this.overlay.classList.toggle('active', show);
+        if (show) {
+            this.updateProgressIndicator();
+        }
+    }
+
+    updateProgress() {
+        this.updateProgressIndicator();
+    }
+
+    updateProgressIndicator() {
+        const content = document.querySelector('#tutorial-content');
+        if (!content) return;
+
+        // Remove existing progress indicator
+        const existing = content.querySelector('.tutorial-progress');
+        if (existing) existing.remove();
+
+        // Create progress indicator
+        const progress = document.createElement('div');
+        progress.className = 'tutorial-progress';
+        
+        const total = this.steps.length;
+        const current = this.currentStep + 1;
+        
+        // Show step indicator
+        progress.innerHTML = `
+            <span class="tutorial-step-indicator">Step ${current} of ${total}</span>
+            <span class="tutorial-next-indicator">
+                <kbd>␣</kbd> or <kbd>Enter</kbd> to continue
+            </span>
+        `;
+        
+        // Insert before the button container
+        const btnContainer = content.querySelector('.tutorial-buttons');
+        if (btnContainer) {
+            content.insertBefore(progress, btnContainer);
+        } else {
+            // If buttons container doesn't exist, add after description
+            const desc = content.querySelector('p');
+            if (desc) {
+                desc.after(progress);
+            } else {
+                content.appendChild(progress);
+            }
+        }
     }
 
     showTooltip(selector, title, description, shortcut = null) {
@@ -270,6 +329,7 @@ class TutorialManager {
             <div class="tooltip-title">${title}</div>
             <div class="tooltip-desc">${description}</div>
             ${shortcut ? `<div class="tooltip-shortcut">⌨️ Shortcut: <kbd>${shortcut}</kbd></div>` : ''}
+            <div class="tooltip-next">Press <kbd>␣</kbd> or <kbd>Enter</kbd> to continue</div>
         `;
         
         tooltip.classList.add('active');
@@ -303,7 +363,6 @@ class TutorialManager {
         this.currentStep = 0;
     }
 
-    // Method to check if a specific step is active (for conditional highlighting)
     isStepActive(stepId) {
         return this.isActive && this.currentStepId === stepId;
     }
