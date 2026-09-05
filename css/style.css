@@ -192,7 +192,7 @@ header h1 {
 }
 
 /* ============================================
-   DUNGEON GRID - NO BORDER, NO GAPS, NO PADDING
+   DUNGEON GRID - FIXED RIGHT SIDE SPACING
    ============================================ */
 #dungeon-grid {
     display: grid;
@@ -201,16 +201,22 @@ header h1 {
     padding: 0;
     background: #e8dcc8;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    border: none;
     width: fit-content;
     height: fit-content;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 60px));
 }
 
 /* ============================================
-   CELL STYLES - NO MARGIN, NO PADDING
+   CELL STYLES - FIXED RIGHT SIDE SPACING
    ============================================ */
 .cell {
     width: 60px;
     height: 60px;
+    min-width: 60px;
+    max-width: 60px;
+    min-height: 60px;
+    max-height: 60px;
     background: #f0e8d8;
     border: 2px solid #8a7a5a;
     display: flex;
@@ -225,6 +231,8 @@ header h1 {
     font-family: 'Courier New', monospace;
     margin: 0;
     padding: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 /* ============================================
@@ -1034,7 +1042,7 @@ header h1 {
 }
 
 /* ============================================
-   RESPONSIVE - NO PADDING AT ALL SIZES
+   RESPONSIVE
    ============================================ */
 @media (max-width: 1200px) {
     #stats-panel {
@@ -1052,8 +1060,16 @@ header h1 {
     .cell {
         width: 48px;
         height: 48px;
+        min-width: 48px;
+        max-width: 48px;
+        min-height: 48px;
+        max-height: 48px;
         margin: 0;
         padding: 0;
+    }
+    
+    #dungeon-grid {
+        grid-template-columns: repeat(auto-fit, minmax(48px, 48px));
     }
     
     .cell .icon {
@@ -1144,8 +1160,16 @@ header h1 {
     .cell {
         width: 42px;
         height: 42px;
+        min-width: 42px;
+        max-width: 42px;
+        min-height: 42px;
+        max-height: 42px;
         margin: 0;
         padding: 0;
+    }
+    
+    #dungeon-grid {
+        grid-template-columns: repeat(auto-fit, minmax(42px, 42px));
     }
     
     .cell .icon {
@@ -1212,8 +1236,16 @@ header h1 {
     .cell {
         width: 36px;
         height: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        min-height: 36px;
+        max-height: 36px;
         margin: 0;
         padding: 0;
+    }
+    
+    #dungeon-grid {
+        grid-template-columns: repeat(auto-fit, minmax(36px, 36px));
     }
     
     .cell .icon {
@@ -1304,8 +1336,16 @@ header h1 {
     .cell {
         width: 30px;
         height: 30px;
+        min-width: 30px;
+        max-width: 30px;
+        min-height: 30px;
+        max-height: 30px;
         margin: 0;
         padding: 0;
+    }
+    
+    #dungeon-grid {
+        grid-template-columns: repeat(auto-fit, minmax(30px, 30px));
     }
     
     .cell .icon {
@@ -1428,7 +1468,7 @@ header h1 {
 }
 
 /* ============================================
-   PRINT STYLES - NO PADDING
+   PRINT STYLES
    ============================================ */
 @media print {
     html, body {
@@ -1485,6 +1525,10 @@ header h1 {
     .cell {
         width: 50px;
         height: 50px;
+        min-width: 50px;
+        max-width: 50px;
+        min-height: 50px;
+        max-height: 50px;
         margin: 0;
         padding: 0;
         border: 2px solid #333;
