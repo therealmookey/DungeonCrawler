@@ -149,7 +149,7 @@ header h1 {
 }
 
 /* ============================================
-   MAP CONTAINER - NO PADDING
+   MAP CONTAINER
    ============================================ */
 #map-container {
     flex: 1;
@@ -192,7 +192,7 @@ header h1 {
 }
 
 /* ============================================
-   DUNGEON GRID - FIXED RIGHT SIDE SPACING
+   DUNGEON GRID
    ============================================ */
 #dungeon-grid {
     display: grid;
@@ -204,19 +204,12 @@ header h1 {
     border: none;
     width: fit-content;
     height: fit-content;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 60px));
 }
 
 /* ============================================
-   CELL STYLES - FIXED RIGHT SIDE SPACING
+   CELL STYLES
    ============================================ */
 .cell {
-    width: 60px;
-    height: 60px;
-    min-width: 60px;
-    max-width: 60px;
-    min-height: 60px;
-    max-height: 60px;
     background: #f0e8d8;
     border: 2px solid #8a7a5a;
     display: flex;
@@ -247,7 +240,6 @@ header h1 {
     padding: 0;
 }
 
-/* Diagonal hatching pattern for walls */
 .cell-wall::before {
     content: '';
     position: absolute;
@@ -265,7 +257,6 @@ header h1 {
     opacity: 0.6;
 }
 
-/* Secondary diagonal for cross-hatching */
 .cell-wall::after {
     content: '';
     position: absolute;
@@ -284,7 +275,7 @@ header h1 {
 }
 
 /* ============================================
-   ROOM STYLES - Thick Borders
+   ROOM STYLES
    ============================================ */
 .cell-room {
     background: #f0e8d8;
@@ -295,13 +286,11 @@ header h1 {
 }
 
 .cell-room .icon {
-    font-size: 1.8em;
     line-height: 1;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .cell-room .label {
-    font-size: 0.5em;
     margin-top: 2px;
     color: #3a2a1a;
     font-weight: bold;
@@ -425,7 +414,7 @@ header h1 {
 }
 
 /* ============================================
-   STATS SECTION - Shared Styles
+   STATS SECTION
    ============================================ */
 .stats-section {
     background: #0a0a0a;
@@ -626,7 +615,6 @@ header h1 {
     transform: none !important;
 }
 
-/* Button Colors */
 .btn-primary {
     background: #d4a843;
     color: #1a1a1a;
@@ -720,7 +708,7 @@ header h1 {
 }
 
 /* ============================================
-   SHORTCUTS SECTION - 2 Columns Max
+   SHORTCUTS SECTION
    ============================================ */
 .shortcuts-section {
     background: #0a1a0a;
@@ -889,7 +877,6 @@ header h1 {
     font-family: 'Courier New', monospace;
 }
 
-/* Tutorial Progress Indicator */
 .tutorial-progress {
     display: flex;
     justify-content: space-between;
@@ -919,7 +906,6 @@ header h1 {
     font-family: 'Courier New', monospace;
 }
 
-/* Tutorial Buttons */
 .tutorial-buttons {
     display: flex;
     justify-content: center;
@@ -1057,29 +1043,6 @@ header h1 {
         padding: 8px 10px;
     }
     
-    .cell {
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
-        max-width: 48px;
-        min-height: 48px;
-        max-height: 48px;
-        margin: 0;
-        padding: 0;
-    }
-    
-    #dungeon-grid {
-        grid-template-columns: repeat(auto-fit, minmax(48px, 48px));
-    }
-    
-    .cell .icon {
-        font-size: 1.4em;
-    }
-    
-    .cell .label {
-        font-size: 0.4em;
-    }
-    
     .stats-grid {
         font-size: 0.6em;
     }
@@ -1157,29 +1120,6 @@ header h1 {
         width: 3px;
     }
     
-    .cell {
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
-        max-width: 42px;
-        min-height: 42px;
-        max-height: 42px;
-        margin: 0;
-        padding: 0;
-    }
-    
-    #dungeon-grid {
-        grid-template-columns: repeat(auto-fit, minmax(42px, 42px));
-    }
-    
-    .cell .icon {
-        font-size: 1.2em;
-    }
-    
-    .cell .label {
-        font-size: 0.35em;
-    }
-    
     .stats-grid {
         font-size: 0.65em;
     }
@@ -1231,25 +1171,6 @@ header h1 {
     
     .difficulty-value {
         font-size: 1.1em;
-    }
-    
-    .cell {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        max-width: 36px;
-        min-height: 36px;
-        max-height: 36px;
-        margin: 0;
-        padding: 0;
-    }
-    
-    #dungeon-grid {
-        grid-template-columns: repeat(auto-fit, minmax(36px, 36px));
-    }
-    
-    .cell .icon {
-        font-size: 1em;
     }
     
     .cell .label {
@@ -1331,25 +1252,6 @@ header h1 {
     
     #map-container {
         padding: 0;
-    }
-    
-    .cell {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
-        max-width: 30px;
-        min-height: 30px;
-        max-height: 30px;
-        margin: 0;
-        padding: 0;
-    }
-    
-    #dungeon-grid {
-        grid-template-columns: repeat(auto-fit, minmax(30px, 30px));
-    }
-    
-    .cell .icon {
-        font-size: 0.8em;
     }
     
     #stats-panel {
@@ -1523,16 +1425,10 @@ header h1 {
     }
 
     .cell {
-        width: 50px;
-        height: 50px;
-        min-width: 50px;
-        max-width: 50px;
-        min-height: 50px;
-        max-height: 50px;
-        margin: 0;
-        padding: 0;
         border: 2px solid #333;
         background: #f5edd8;
+        margin: 0;
+        padding: 0;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
@@ -1649,9 +1545,5 @@ header h1 {
         background: #f0e8d0 !important;
         border: 3px solid #d4a843 !important;
         animation: none !important;
-    }
-
-    .cell .icon {
-        font-size: 1.6em;
     }
 }
