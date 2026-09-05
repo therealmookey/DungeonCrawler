@@ -27,21 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
         log: document.getElementById('log')
     };
 
-    // State
     let currentD20Roll = null;
     let currentD4Roll = null;
     let chargesRemaining = 0;
 
-    // ============================================
-    // UI UPDATE FUNCTIONS
-    // ============================================
-    
     function updateUI() {
-        // Stats
         elements.roomCount.textContent = currentMap.size;
         elements.position.textContent = `(${mapGenerator.currentPos.x}, ${mapGenerator.currentPos.y})`;
         
-        // Dice displays
         if (currentD20Roll !== null) {
             elements.d20Display.textContent = currentD20Roll;
         }
@@ -50,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         elements.chargesDisplay.textContent = chargesRemaining;
 
-        // Status updates
         if (chargesRemaining > 0) {
             elements.d20Status.textContent = '✅ Ready';
             elements.d20Status.className = 'dice-status active';
@@ -81,10 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderLog();
     }
 
-    // ============================================
-    // RENDER FUNCTIONS
-    // ============================================
-    
     function renderGrid() {
         const grid = elements.grid;
         if (currentMap.size === 0) {
@@ -101,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
             maxY = Math.max(maxY, room.y);
         }
 
-        // Add padding
         const padding = 2;
         minX -= padding;
         maxX += padding;
@@ -125,8 +112,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (room) {
                     cell.classList.add('cell-room');
-                    if (room.type === 'start') cell.classList.add('cell-start');
-                    if (isCurrent) cell.classList.add('cell-current');
+                    
+                    // Start room gets special styling
+                    if (room.type === 'start') {
+                        cell.classList.add('cell-start');
+                    }
+                    
+                    if (isCurrent) {
+                        cell.classList.add('cell-current');
+                    }
 
                     const iconSpan = document.createElement('span');
                     iconSpan.className = 'icon';
@@ -134,11 +128,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const labelSpan = document.createElement('span');
                     labelSpan.className = 'label';
-                    labelSpan.textContent = room.label || 'Room';
+                    labelSpan.textContent = room.label || '';
 
                     cell.appendChild(iconSpan);
                     cell.appendChild(labelSpan);
-                    cell.title = `Room ${room.id}`;
+                    
+                    // Tooltip with more info
+                    if (room.type === 'start') {
+                        cell.title = '⭐ START - The beginning of your dungeon';
+                    } else {
+                        cell.title = `Room ${room.id}`;
+                    }
                 } else {
                     cell.classList.add('cell-wall');
                 }
@@ -163,16 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
         logDiv.appendChild(entry);
         logDiv.scrollTop = logDiv.scrollHeight;
         
-        // Keep only last 20 entries
         while (logDiv.children.length > 20) {
             logDiv.removeChild(logDiv.firstChild);
         }
     }
 
-    // ============================================
-    // ACTION FUNCTIONS
-    // ============================================
-    
     function handleD20Roll() {
         const result = mapGenerator.rollForCharges();
         currentD20Roll = result.finalRoll;
@@ -180,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMap = new Map(mapGenerator.rooms);
         
         addLogEntry(`🎲 D20: ${result.rolls.join(', ')} → ${result.charges} charges!`, 'd20-roll');
+        addLogEntry(`⭐ START room at (0, 0) - The beginning!`, 'start');
         
         elements.d20Display.textContent = result.finalRoll;
         updateUI();
@@ -240,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.d4Display.textContent = '-';
                 elements.d20Display.textContent = '-';
                 addLogEntry('🔄 Dungeon reset!', 'info');
+                addLogEntry('⭐ START room ready at (0, 0)', 'start');
                 updateUI();
             }
         } else {
@@ -252,14 +249,12 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.d4Display.textContent = '-';
             elements.d20Display.textContent = '-';
             addLogEntry('🔄 Dungeon reset!', 'info');
+            addLogEntry('⭐ START room ready at (0, 0)', 'start');
             updateUI();
         }
     }
 
-    // ============================================
-    // EVENT LISTENERS
-    // ============================================
-    
+    // Event Listeners
     elements.rollD20Btn.addEventListener('click', handleD20Roll);
     elements.rollD4Btn.addEventListener('click', handleD4Roll);
     elements.undoBtn.addEventListener('click', handleUndo);
@@ -288,18 +283,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    
+    // Initialization
     addLogEntry('🎲 Welcome to the Dungeon Cartographer!', 'info');
+    addLogEntry('⭐ START room at (0, 0) - Always visible!', 'start');
     addLogEntry('📖 Roll D20 → get charges → roll D4 → place rooms', 'info');
     addLogEntry('💡 Enter = Roll | Ctrl+Z = Undo | R = Reset', 'info');
     
     currentMap = new Map(mapGenerator.rooms);
     updateUI();
 
-    // Handle window resize
+    // Handle resize
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);

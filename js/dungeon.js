@@ -1,6 +1,6 @@
 /**
  * Dungeon Cartographer - Core Generator
- * Clean version without traps, treasures, or special rooms
+ * Clean version with clear start indicator
  */
 
 class DungeonMapGenerator {
@@ -21,8 +21,8 @@ class DungeonMapGenerator {
         this.currentD20 = null;
         this.currentD4 = null;
         
-        // Start room
-        this.addRoom(0, 0, 'start');
+        // Start room with clear indicator
+        this.addRoom(0, 0, 'start', '🏠', 'START');
         this.currentPos = { x: 0, y: 0 };
         this.addHistory('start', { x: 0, y: 0 });
     }
@@ -41,7 +41,6 @@ class DungeonMapGenerator {
         return directions[d4] || directions[1];
     }
 
-    // Roll D20 until it hits 1 - determines number of charges
     rollForCharges() {
         this.d20Rolls = [];
         let roll = 0;
@@ -64,7 +63,6 @@ class DungeonMapGenerator {
         };
     }
 
-    // Place a room in the current direction
     placeRoom(direction) {
         if (this.charges <= 0) {
             return { success: false, message: 'No charges remaining!' };
@@ -75,7 +73,6 @@ class DungeonMapGenerator {
         const newY = this.currentPos.y + dir.dy;
         const key = `${newX},${newY}`;
 
-        // Check if room already exists
         if (this.rooms.has(key)) {
             this.currentPos = { x: newX, y: newY };
             this.addHistory('move', { x: newX, y: newY, direction: dir.name });
@@ -88,8 +85,8 @@ class DungeonMapGenerator {
             };
         }
 
-        // Create new room - just a basic room, no special types
-        this.addRoom(newX, newY, 'room', '⬜', 'Room', '');
+        // Regular room
+        this.addRoom(newX, newY, 'room', '⬜', '');
         this.currentPos = { x: newX, y: newY };
         this.depth++;
         this.charges--;
@@ -107,7 +104,7 @@ class DungeonMapGenerator {
         };
     }
 
-    addRoom(x, y, type = 'room', icon = '⬜', label = 'Room', color = '') {
+    addRoom(x, y, type = 'room', icon = '⬜', label = 'Room') {
         const key = `${x},${y}`;
         if (!this.rooms.has(key)) {
             this.roomCounter++;
@@ -146,7 +143,7 @@ class DungeonMapGenerator {
                 this.charges++;
                 return { 
                     success: true, 
-                    message: `Undid room placement`,
+                    message: 'Undid room placement',
                     roomRemoved: room
                 };
             }
@@ -159,7 +156,7 @@ class DungeonMapGenerator {
                 this.charges++;
                 return { 
                     success: true, 
-                    message: `Undid movement`,
+                    message: 'Undid movement',
                     chargesLeft: this.charges
                 };
             }
@@ -167,6 +164,15 @@ class DungeonMapGenerator {
 
         this.history.push(lastAction);
         return { success: false, message: 'Could not undo this action' };
+    }
+
+    getStartRoom() {
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'start') {
+                return { key, ...room };
+            }
+        }
+        return null;
     }
 
     exportMapData() {
@@ -177,7 +183,8 @@ class DungeonMapGenerator {
             charges: this.charges,
             d20Rolls: this.d20Rolls,
             d4Rolls: this.d4Rolls,
-            currentPos: this.currentPos
+            currentPos: this.currentPos,
+            startRoom: this.getStartRoom()
         };
     }
 }
