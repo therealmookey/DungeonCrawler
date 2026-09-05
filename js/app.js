@@ -41,6 +41,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let chargesRemaining = 0;
 
     // ============================================
+    // SCROLL TO CURRENT - Define FIRST
+    // ============================================
+    function scrollToCurrent() {
+        const container = elements.grid.parentElement;
+        const grid = elements.grid;
+        if (!container || !grid || currentMap.size === 0) return;
+
+        const cells = grid.querySelectorAll('.cell');
+        let currentCell = null;
+        for (const cell of cells) {
+            if (cell.classList.contains('cell-current')) {
+                currentCell = cell;
+                break;
+            }
+        }
+
+        if (currentCell) {
+            const containerRect = container.getBoundingClientRect();
+            const cellRect = currentCell.getBoundingClientRect();
+            
+            const scrollX = cellRect.left - containerRect.left - containerRect.width / 2 + cellRect.width / 2;
+            const scrollY = cellRect.top - containerRect.top - containerRect.height / 2 + cellRect.height / 2;
+            
+            container.scrollTo({
+                left: container.scrollLeft + scrollX,
+                top: container.scrollTop + scrollY,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    // ============================================
     // UPDATE UI
     // ============================================
     function updateUI() {
@@ -132,19 +164,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let html = '';
         
-        // Rooms
         html += `<div class="stat-item">
                     <span class="stat-label">🏠 Rooms</span>
                     <span class="stat-value">${stats.totalRooms}</span>
                 </div>`;
         
-        // Depth
         html += `<div class="stat-item">
                     <span class="stat-label">📏 Depth</span>
                     <span class="stat-value">${stats.depth}</span>
                 </div>`;
         
-        // Features total
         let totalFeatures = 0;
         for (const [type, count] of Object.entries(stats.featureStats)) {
             if (type !== 'monsterTreasure' && type !== 'objective') {
@@ -156,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="stat-value">${totalFeatures}</span>
                 </div>`;
         
-        // Farthest room
         if (stats.farthestRoom) {
             html += `<div class="stat-item">
                         <span class="stat-label">📍 Farthest</span>
@@ -164,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
         }
         
-        // Goal
         if (stats.objectivePlaced) {
             html += `<div class="stat-item">
                         <span class="stat-label">⭐ Goal</span>
@@ -177,13 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
         }
         
-        // Balance status
         html += `<div class="stat-item">
                     <span class="stat-label">⚖️ Balance</span>
                     <span class="stat-value" style="color: ${stats.balanceUsed ? '#88ff88' : '#ffaa44'};">${stats.balanceUsed ? '✅ Used' : '⏳ Ready'}</span>
                 </div>`;
         
-        // Direction stats
         const totalMoves = stats.directionStats.totalMoves || 0;
         if (totalMoves > 0) {
             const newPct = ((stats.directionStats.newDirections / totalMoves) * 100).toFixed(0);
@@ -214,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             start: '🏠',
             monster: '👹',
             treasure: '💰',
-            trap: '⚠️',
+            trap: '⚔️',
             boss: '👑',
             puzzle: '🧩',
             shop: '🏪',
@@ -228,13 +253,21 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const [type, pct] of sortedTypes) {
             const icon = typeIcons[type] || '📦';
             const count = stats.roomTypes[type] || 0;
-            if (count > 0) {
+            if (count > 0 && type !== 'start') {
                 html += `<span class="room-type-item">
                             <span class="icon">${icon}</span>
                             <span class="count">${count}</span>
                             <span class="pct">(${pct}%)</span>
                         </span>`;
             }
+        }
+        
+        // Show start room separately
+        if (stats.roomTypes.start) {
+            html = `<span class="room-type-item" style="border-color: #2a6a2a;">
+                        <span class="icon">🏠</span>
+                        <span class="count">${stats.roomTypes.start}</span>
+                    </span>` + html;
         }
         
         typesDiv.innerHTML = html || '<span style="color: #666;">No rooms yet</span>';
@@ -247,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const featureIcons = {
             treasure: '💰',
-            trap: '⚠️',
+            trap: '⚔️',
             monster: '👹',
             puzzle: '🧩',
             shop: '🏪',
@@ -271,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (stats.objective > 0) {
-            html += `<span class="feature-stat" style="border-color: #ffd700; animation: pulse-objective 2s infinite;">⭐ ${stats.objective}</span>`;
+            html += `<span class="feature-stat" style="border-color: #ffd700; animation: pulse-gold-classic 2s infinite;">⭐ ${stats.objective}</span>`;
         }
         
         if (totalFeatures === 0 && stats.monsterTreasure === 0 && stats.objective === 0) {
@@ -284,149 +317,143 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============================================
-    // RENDER GRID - UPDATED WITH FIXED WIDTH
+    // RENDER GRID - Updated with Better Display
     // ============================================
     function renderGrid() {
-    const grid = elements.grid;
-    if (currentMap.size === 0) {
-        grid.innerHTML = '<div style="padding: 50px; color: #666; text-align: center;">🎲 Roll D8 for difficulty, then D20 to start!</div>';
-        return;
-    }
-
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    for (const [key, room] of currentMap) {
-        minX = Math.min(minX, room.x);
-        maxX = Math.max(maxX, room.x);
-        minY = Math.min(minY, room.y);
-        maxY = Math.max(maxY, room.y);
-    }
-
-    const padding = 3;
-    minX -= padding;
-    maxX += padding;
-    minY -= padding;
-    maxY += padding;
-
-    const width = maxX - minX + 1;
-    const height = maxY - minY + 1;
-    
-    const container = elements.grid.parentElement;
-    const containerWidth = container.clientWidth - 4;
-    const containerHeight = container.clientHeight - 4;
-    
-    let cellSize = Math.min(
-        Math.floor(containerWidth / width),
-        Math.floor(containerHeight / height),
-        65
-    );
-    cellSize = Math.max(cellSize, 20);
-
-    grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
-    grid.innerHTML = '';
-
-    // Define clear, readable labels and icons
-    const roomDisplay = {
-        start: { icon: '🏠', label: 'START' },
-        treasure: { icon: '💰', label: 'TREASURE' },
-        trap: { icon: '⚔️', label: 'TRAP' },
-        monster: { icon: '👹', label: 'MONSTER' },
-        puzzle: { icon: '🧩', label: 'PUZZLE' },
-        shop: { icon: '🏪', label: 'SHOP' },
-        boss: { icon: '👑', label: 'BOSS' },
-        objective: { icon: '⭐', label: 'GOAL' },
-        room: { icon: '⬜', label: '' },
-        empty: { icon: '⬜', label: '' }
-    };
-
-    for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            
-            cell.style.width = cellSize + 'px';
-            cell.style.height = cellSize + 'px';
-            cell.style.minWidth = cellSize + 'px';
-            cell.style.maxWidth = cellSize + 'px';
-            cell.style.minHeight = cellSize + 'px';
-            cell.style.maxHeight = cellSize + 'px';
-            
-            const key = `${x},${y}`;
-            const room = currentMap.get(key);
-            const isCurrent = mapGenerator.currentPos.x === x && mapGenerator.currentPos.y === y;
-
-            if (room) {
-                cell.classList.add('cell-room');
-                if (room.type === 'start') cell.classList.add('cell-start');
-                if (room.color) cell.classList.add(room.color);
-                if (isCurrent) cell.classList.add('cell-current');
-
-                // Determine display info
-                let displayIcon = '⬜';
-                let displayLabel = '';
-                let displayType = room.type;
-
-                if (room.type === 'objective') {
-                    displayIcon = '⭐';
-                    displayLabel = 'GOAL';
-                } else if (room.type === 'start') {
-                    displayIcon = '🏠';
-                    displayLabel = 'START';
-                } else if (room.featureType) {
-                    const feature = roomDisplay[room.featureType];
-                    displayIcon = feature ? feature.icon : '⬜';
-                    displayLabel = feature ? feature.label : '';
-                    
-                    // If monster has treasure, show it
-                    if (room.featureType === 'monster' && room.hasTreasure) {
-                        displayIcon = '👹💎';
-                        displayLabel = 'MONSTER';
-                    }
-                }
-
-                const iconSpan = document.createElement('span');
-                iconSpan.className = 'icon';
-                iconSpan.textContent = displayIcon;
-                iconSpan.style.fontSize = Math.min(cellSize * 0.4, 32) + 'px';
-
-                const labelSpan = document.createElement('span');
-                labelSpan.className = 'label';
-                labelSpan.textContent = displayLabel;
-                labelSpan.style.fontSize = Math.max(cellSize * 0.12, 7) + 'px';
-
-                cell.appendChild(iconSpan);
-                cell.appendChild(labelSpan);
-                
-                // Tooltip with room info
-                let tooltip = `Room ${room.id}`;
-                if (room.type === 'start') tooltip = '🏠 START - The beginning';
-                if (room.type === 'objective') tooltip = '⭐ GOAL - The destination!';
-                if (room.featureType && room.type !== 'objective' && room.type !== 'start') {
-                    tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
-                    if (room.hasTreasure) tooltip += ' 💎 (has treasure)';
-                    const dist = mapGenerator.getRoomDistance(key);
-                    tooltip += `\n📍 ${dist} rooms from start`;
-                }
-                cell.title = tooltip;
-            } else {
-                cell.classList.add('cell-wall');
-            }
-            grid.appendChild(cell);
+        const grid = elements.grid;
+        if (currentMap.size === 0) {
+            grid.innerHTML = '<div style="padding: 50px; color: #666; text-align: center;">🎲 Roll D8 for difficulty, then D20 to start!</div>';
+            return;
         }
-    }
 
-    setTimeout(scrollToCurrent, 50);
-}
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        for (const [key, room] of currentMap) {
+            minX = Math.min(minX, room.x);
+            maxX = Math.max(maxX, room.x);
+            minY = Math.min(minY, room.y);
+            maxY = Math.max(maxY, room.y);
+        }
+
+        const padding = 3;
+        minX -= padding;
+        maxX += padding;
+        minY -= padding;
+        maxY += padding;
+
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+        
+        const container = elements.grid.parentElement;
+        const containerWidth = container.clientWidth - 4;
+        const containerHeight = container.clientHeight - 4;
+        
+        let cellSize = Math.min(
+            Math.floor(containerWidth / width),
+            Math.floor(containerHeight / height),
+            65
+        );
+        cellSize = Math.max(cellSize, 20);
+
+        grid.style.gridTemplateColumns = `repeat(${width}, ${cellSize}px)`;
+        grid.innerHTML = '';
+
+        // Define clear, readable labels and icons
+        const roomDisplay = {
+            start: { icon: '🏠', label: 'START' },
+            treasure: { icon: '💰', label: 'TREASURE' },
+            trap: { icon: '⚔️', label: 'TRAP' },
+            monster: { icon: '👹', label: 'MONSTER' },
+            puzzle: { icon: '🧩', label: 'PUZZLE' },
+            shop: { icon: '🏪', label: 'SHOP' },
+            boss: { icon: '👑', label: 'BOSS' },
+            objective: { icon: '⭐', label: 'GOAL' },
+            room: { icon: '⬜', label: '' },
+            empty: { icon: '⬜', label: '' }
+        };
+
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                cell.style.width = cellSize + 'px';
+                cell.style.height = cellSize + 'px';
+                cell.style.minWidth = cellSize + 'px';
+                cell.style.maxWidth = cellSize + 'px';
+                cell.style.minHeight = cellSize + 'px';
+                cell.style.maxHeight = cellSize + 'px';
+                
+                const key = `${x},${y}`;
+                const room = currentMap.get(key);
+                const isCurrent = mapGenerator.currentPos.x === x && mapGenerator.currentPos.y === y;
+
+                if (room) {
+                    cell.classList.add('cell-room');
+                    if (room.type === 'start') cell.classList.add('cell-start');
+                    if (room.color) cell.classList.add(room.color);
+                    if (isCurrent) cell.classList.add('cell-current');
+
+                    // Determine display info
+                    let displayIcon = '⬜';
+                    let displayLabel = '';
+
+                    if (room.type === 'objective') {
+                        displayIcon = '⭐';
+                        displayLabel = 'GOAL';
+                    } else if (room.type === 'start') {
+                        displayIcon = '🏠';
+                        displayLabel = 'START';
+                    } else if (room.featureType) {
+                        const feature = roomDisplay[room.featureType];
+                        displayIcon = feature ? feature.icon : '⬜';
+                        displayLabel = feature ? feature.label : '';
+                        
+                        if (room.featureType === 'monster' && room.hasTreasure) {
+                            displayIcon = '👹💎';
+                            displayLabel = 'MONSTER';
+                        }
+                    }
+
+                    const iconSpan = document.createElement('span');
+                    iconSpan.className = 'icon';
+                    iconSpan.textContent = displayIcon;
+                    iconSpan.style.fontSize = Math.min(cellSize * 0.4, 32) + 'px';
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.className = 'label';
+                    labelSpan.textContent = displayLabel;
+                    labelSpan.style.fontSize = Math.max(cellSize * 0.12, 7) + 'px';
+
+                    cell.appendChild(iconSpan);
+                    cell.appendChild(labelSpan);
+                    
+                    let tooltip = `Room ${room.id}`;
+                    if (room.type === 'start') tooltip = '🏠 START - The beginning';
+                    if (room.type === 'objective') tooltip = '⭐ GOAL - The destination!';
+                    if (room.featureType && room.type !== 'objective' && room.type !== 'start') {
+                        tooltip += `\n🎯 ${room.featureType.toUpperCase()}`;
+                        if (room.hasTreasure) tooltip += ' 💎 (has treasure)';
+                        const dist = mapGenerator.getRoomDistance(key);
+                        tooltip += `\n📍 ${dist} rooms from start`;
+                    }
+                    cell.title = tooltip;
+                } else {
+                    cell.classList.add('cell-wall');
+                }
+                grid.appendChild(cell);
+            }
+        }
+
+        // Use setTimeout to ensure DOM is updated before scrolling
+        setTimeout(scrollToCurrent, 50);
+    }
 
     // ============================================
     // LOG
     // ============================================
     function renderLog() {
-        const logDiv = elements.log;
-        if (logDiv.children.length === 0) {
-            logDiv.innerHTML = '<div class="log-entry info">🎲 Roll D8 to set difficulty!</div>';
-        }
-        logDiv.scrollTop = logDiv.scrollHeight;
+        // Keep existing log entries, nothing needed here
     }
 
     function addLogEntry(message, className = 'info') {
@@ -682,6 +709,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ============================================
+    // WINDOW RESIZE
+    // ============================================
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            renderGrid();
+        }, 200);
+    });
+
+    // ============================================
+    // MUTATION OBSERVER FOR SCROLLING
+    // ============================================
+    const observer = new MutationObserver(() => {
+        scrollToCurrent();
+    });
+
+    // ============================================
     // INITIALIZATION
     // ============================================
     addLogEntry('🎲 Welcome to the Dungeon Cartographer!', 'info');
@@ -703,21 +748,12 @@ document.addEventListener('DOMContentLoaded', () => {
     currentMap = new Map(mapGenerator.rooms);
     updateUI();
 
-    setTimeout(initTutorial, 100);
-
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            renderGrid();
-        }, 200);
-    });
-
-    const observer = new MutationObserver(() => {
-        scrollToCurrent();
-    });
+    // Start observing after initial render
     observer.observe(elements.grid, { childList: true, subtree: true });
 
+    setTimeout(initTutorial, 100);
+
+    // Expose functions for debugging
     window.appFunctions = {
         handleD8Roll,
         handleD20Roll,
