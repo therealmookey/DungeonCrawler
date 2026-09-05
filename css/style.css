@@ -1,0 +1,150 @@
+/* ============================================
+   GLOBAL RESET & BASE - Dit reset alle standaard browser styling
+   ============================================ */
+* {
+    margin: 0;              # Geen marge
+    padding: 0;             # Geen padding
+    box-sizing: border-box; # Zorgt dat padding en border in de breedte vallen
+}
+
+body {
+    font-family: 'Courier New', monospace;  # Lettertype - lijkt op een oud computer scherm
+    background: #1a1a1a;    # Donkere achtergrond (dungeon sfeer)
+    color: #e0d6b0;         # Oud-papier kleur tekst
+    min-height: 100vh;      # Minimaal de hele schermhoogte
+    display: flex;          # Flexbox voor centreren
+    justify-content: center; # Horizontaal centreren
+    padding: 20px;          # Ruimte rondom
+}
+
+/* ============================================
+   KLEUREN SYSTEEM - Hoe werkt het?
+   ============================================ */
+/*
+   #1a1a1a = Bijna zwart (achtergrond)
+   #2a2a2a = Donkergrijs (vakken)
+   #3a3a3a = Grijs (randen)
+   #d4a843 = Goud (accenten)
+   #e0d6b0 = Oud papier (tekst)
+   #8a7a5a = Bruin (subtiele tekst)
+*/
+
+/* ============================================
+   KOPPEN - Titels
+   ============================================ */
+header h1 {
+    color: #d4a843;         # Goudkleurig
+    text-shadow: 0 0 20px rgba(212, 168, 67, 0.3);  # Gloed-effect
+    font-size: 2.8em;       # Groot
+    letter-spacing: 2px;    # Meer ruimte tussen letters
+}
+
+/* ============================================
+   KNOPPEN - Interactie
+   ============================================ */
+.btn {
+    padding: 12px 28px;     # Binnenruimte
+    font-size: 1.1em;       # Tekstgrootte
+    font-family: 'Courier New', monospace;  # Zelfde lettertype
+    border: 2px solid transparent;  # Rand, maar onzichtbaar
+    border-radius: 8px;     # Afgeronde hoeken
+    cursor: pointer;        # Verandert in handje bij hover
+    transition: all 0.3s ease;  # Vloeiende overgangen
+}
+
+.btn:hover {
+    transform: translateY(-2px);  # Gaat iets omhoog bij hover
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);  # Schaduw
+}
+
+.btn-primary {
+    background: #d4a843;    # Goud achtergrond
+    color: #1a1a1a;         # Donkere tekst
+    border-color: #d4a843;  # Goud rand
+}
+
+/* ============================================
+   STATS - Informatie
+   ============================================ */
+.stats {
+    background: #2a2a2a;
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 2px solid #3a3a3a;
+    margin-bottom: 20px;
+    display: grid;          # Grid layout
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));  # Automatisch aanpassen
+    gap: 15px;
+}
+
+.stat-label {
+    display: block;         # Op eigen regel
+    font-size: 0.8em;
+    color: #8a7a5a;
+    text-transform: uppercase;  # ALLES HOOFDLETTERS
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.4em;
+    color: #d4a843;
+    font-weight: bold;
+}
+
+/* ============================================
+   DUNGEON GRID - Het speelveld
+   ============================================ */
+.cell {
+    width: 55px;
+    height: 55px;
+    border: 1px solid #2a2a2a;
+    display: flex;
+    flex-direction: column;  # Content onder elkaar
+    align-items: center;     # Horizontaal centreren
+    justify-content: center; # Verticaal centreren
+    transition: all 0.3s ease;
+    border-radius: 3px;
+}
+
+.cell-room {
+    background: #222222;
+    border-color: #333333;
+}
+
+.cell-room.has-trap {
+    background: #3a1a1a;    # Roodachtig voor vallen
+    border-color: #8a2a2a;
+    animation: pulse-red 2s infinite;  # Knipperende animatie
+}
+
+.cell-current {
+    box-shadow: inset 0 0 30px rgba(212, 168, 67, 0.4);  # Goud gloed
+    border-color: #d4a843 !important;
+    transform: scale(1.05);  # Iets groter
+    z-index: 1;              # Bovenop andere elementen
+}
+
+/* ============================================
+   ANIMATIES - Bewegende effecten
+   ============================================ */
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.4); }
+}
+/* Dit zorgt dat rode kamers (vallen) zachtjes knipperen */
+
+/* ============================================
+   RESPONSIVE - Aanpassen voor verschillende schermen
+   ============================================ */
+@media (max-width: 768px) {
+    /* Als het scherm kleiner is dan 768px (tablets/telefoons) */
+    .cell {
+        width: 40px;
+        height: 40px;
+    }
+    .cell .icon {
+        font-size: 1.3em;
+    }
+    /* Kleinere cellen en iconen op mobiel */
+}
