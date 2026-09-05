@@ -1,8 +1,5 @@
 /**
- * Dungeon Cartographer - Balanced with Objectives
- * - Reduced monster count
- * - Scarce treasure (5-15%)
- * - Objective tile system
+ * Dungeon Cartographer - Complete with Stats
  */
 
 class DungeonMapGenerator {
@@ -21,7 +18,8 @@ class DungeonMapGenerator {
                 shopChance: 0,
                 emptyRoomChance: 60,
                 monsterTreasureChance: 25,
-                objectiveDistance: 5
+                objectiveDistance: 5,
+                description: 'Ideal for beginners, mostly empty rooms'
             },
             2: {
                 name: 'Easy',
@@ -36,7 +34,8 @@ class DungeonMapGenerator {
                 shopChance: 5,
                 emptyRoomChance: 45,
                 monsterTreasureChance: 30,
-                objectiveDistance: 6
+                objectiveDistance: 6,
+                description: 'Light challenge, some monsters and traps'
             },
             3: {
                 name: 'Normal',
@@ -51,7 +50,8 @@ class DungeonMapGenerator {
                 shopChance: 8,
                 emptyRoomChance: 35,
                 monsterTreasureChance: 35,
-                objectiveDistance: 7
+                objectiveDistance: 7,
+                description: 'Balanced dungeon with a boss encounter'
             },
             4: {
                 name: 'Normal+',
@@ -66,7 +66,8 @@ class DungeonMapGenerator {
                 shopChance: 8,
                 emptyRoomChance: 28,
                 monsterTreasureChance: 40,
-                objectiveDistance: 8
+                objectiveDistance: 8,
+                description: 'Moderate challenge with more enemies'
             },
             5: {
                 name: 'Hard',
@@ -81,7 +82,8 @@ class DungeonMapGenerator {
                 shopChance: 5,
                 emptyRoomChance: 22,
                 monsterTreasureChance: 40,
-                objectiveDistance: 9
+                objectiveDistance: 9,
+                description: 'Significant challenge, many enemies and traps'
             },
             6: {
                 name: 'Hard+',
@@ -96,7 +98,8 @@ class DungeonMapGenerator {
                 shopChance: 5,
                 emptyRoomChance: 18,
                 monsterTreasureChance: 45,
-                objectiveDistance: 10
+                objectiveDistance: 10,
+                description: 'Dangerous, prepare for tough fights'
             },
             7: {
                 name: 'Very Hard',
@@ -111,7 +114,8 @@ class DungeonMapGenerator {
                 shopChance: 3,
                 emptyRoomChance: 15,
                 monsterTreasureChance: 50,
-                objectiveDistance: 11
+                objectiveDistance: 11,
+                description: 'Extremely dangerous, multiple bosses'
             },
             8: {
                 name: '💀 Deadly',
@@ -126,7 +130,8 @@ class DungeonMapGenerator {
                 shopChance: 3,
                 emptyRoomChance: 12,
                 monsterTreasureChance: 55,
-                objectiveDistance: 12
+                objectiveDistance: 12,
+                description: 'Near impossible, maximum challenge!'
             }
         };
         
@@ -166,6 +171,7 @@ class DungeonMapGenerator {
         this.roomDistanceCache = new Map();
         this.backupAttempts = 0;
         this.newDirectionAttempts = 0;
+        this.totalRoomsPlaced = 0;
         
         this.addRoom(0, 0, 'start', '🏠', 'START');
         this.currentPos = { x: 0, y: 0 };
@@ -224,7 +230,6 @@ class DungeonMapGenerator {
         }
 
         if (unexplored.length > 0) {
-            // 70% chance to explore new territory
             if (this.rollDice(100) <= 70) {
                 this.newDirectionAttempts++;
                 const index = this.rollDice(unexplored.length) - 1;
@@ -343,12 +348,10 @@ class DungeonMapGenerator {
         const key = `${x},${y}`;
         const distance = this.calculateDistance(x, y);
         
-        // Empty room check
         if (this.rollDice(100) <= diffConfig.emptyRoomChance) {
             return null;
         }
         
-        // Boss check (very rare)
         if (roll === 20) {
             if (distance >= diffConfig.bossMinDistance) {
                 const currentBosses = this.featureStats.boss || 0;
@@ -361,7 +364,6 @@ class DungeonMapGenerator {
                     };
                 }
             }
-            // Convert to monster if too close or max reached
             const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
             return {
                 type: 'monster',
@@ -372,7 +374,6 @@ class DungeonMapGenerator {
             };
         }
         
-        // Shop check (very rare)
         if (roll === 18 || roll === 19) {
             if (this.rollDice(100) <= diffConfig.shopChance) {
                 return {
@@ -382,7 +383,6 @@ class DungeonMapGenerator {
                     description: 'Merchant Shop'
                 };
             }
-            // Convert to treasure
             return {
                 type: 'treasure',
                 icon: '💰',
@@ -391,7 +391,6 @@ class DungeonMapGenerator {
             };
         }
         
-        // Monster check (limited)
         if (roll >= 11 && roll <= 15) {
             const currentMonsters = this.featureStats.monster || 0;
             if (currentMonsters < diffConfig.maxMonsters) {
@@ -404,11 +403,9 @@ class DungeonMapGenerator {
                     hasTreasure: hasTreasure
                 };
             }
-            // Too many monsters - become empty
             return null;
         }
         
-        // Trap check (limited)
         if (roll >= 8 && roll <= 10) {
             const currentTraps = this.featureStats.trap || 0;
             const maxTraps = diffConfig.trapMax;
@@ -423,7 +420,6 @@ class DungeonMapGenerator {
             return null;
         }
         
-        // Puzzle check
         if (roll >= 16 && roll <= 17) {
             return {
                 type: 'puzzle',
@@ -433,7 +429,6 @@ class DungeonMapGenerator {
             };
         }
         
-        // Treasure check (scarce - only on low rolls)
         if (roll >= 2 && roll <= 4) {
             const currentTreasure = this.featureStats.treasure || 0;
             const maxTreasure = diffConfig.treasureMax;
@@ -464,7 +459,6 @@ class DungeonMapGenerator {
         const newY = this.currentPos.y + dir.dy;
         const key = `${newX},${newY}`;
 
-        // Track direction usage
         const currentKey = `${this.currentPos.x},${this.currentPos.y}`;
         if (!this.roomDirectionMemory.has(currentKey)) {
             this.roomDirectionMemory.set(currentKey, new Set());
@@ -493,9 +487,9 @@ class DungeonMapGenerator {
             };
         }
 
-        // Create new room
         this.addRoom(newX, newY, 'room', '⬜', '');
         const room = this.rooms.get(key);
+        this.totalRoomsPlaced++;
         
         this.roomDistanceCache.set(key, this.calculateDistance(newX, newY));
         
@@ -506,7 +500,6 @@ class DungeonMapGenerator {
         const oppositeDir = ((direction + 1) % 4) + 1;
         this.roomDirectionMemory.get(newKey).add(oppositeDir);
         
-        // Check for feature
         const feature = this.checkForFeature(newX, newY);
         let featureMessage = '';
         let monsterTreasureMessage = '';
@@ -570,7 +563,6 @@ class DungeonMapGenerator {
         const diffConfig = this.difficultyConfig[this.difficulty];
         const minDistance = diffConfig.objectiveDistance || 5;
         
-        // Find farthest room from start that isn't already special
         let farthestRoom = null;
         let farthestDist = 0;
         
@@ -585,7 +577,6 @@ class DungeonMapGenerator {
         }
 
         if (!farthestRoom) {
-            // If no room far enough, pick the farthest available
             for (const [key, room] of this.rooms) {
                 if (room.type === 'start' || room.type === 'objective') continue;
                 const dist = this.roomDistanceCache.get(key) || 0;
@@ -638,7 +629,6 @@ class DungeonMapGenerator {
             };
         }
 
-        // Calculate target counts - reduced for better balance
         const targetCounts = {
             treasure: Math.min(
                 Math.max(diffConfig.treasureMin, Math.floor(totalRooms * 0.08)),
@@ -657,7 +647,6 @@ class DungeonMapGenerator {
             shop: 0
         };
 
-        // Get rooms without features
         const availableRooms = [];
         for (const [key, room] of this.rooms) {
             if (room.type !== 'start' && room.type !== 'objective' && !room.featureType) {
@@ -666,14 +655,12 @@ class DungeonMapGenerator {
             }
         }
 
-        // Sort by distance from start
         availableRooms.sort((a, b) => b.distance - a.distance);
 
         let added = 0;
         const addedFeatures = [];
         const usedKeys = new Set();
         
-        // Place bosses in farthest rooms
         const bossTarget = targetCounts.boss || 0;
         const bossCandidates = availableRooms.filter(r => r.distance >= diffConfig.bossMinDistance);
         
@@ -699,7 +686,6 @@ class DungeonMapGenerator {
             }
         }
 
-        // Place monsters (with treasure chance)
         const monsterTarget = targetCounts.monster || 0;
         const currentMonsters = this.featureStats.monster || 0;
         const monsterNeeded = Math.max(0, monsterTarget - currentMonsters);
@@ -728,7 +714,6 @@ class DungeonMapGenerator {
             }
         }
 
-        // Place traps
         const trapTarget = targetCounts.trap || 0;
         const currentTraps = this.featureStats.trap || 0;
         const trapNeeded = Math.max(0, trapTarget - currentTraps);
@@ -752,7 +737,6 @@ class DungeonMapGenerator {
             }
         }
 
-        // Place treasures (scarce)
         const treasureTarget = targetCounts.treasure || 0;
         const currentTreasure = this.featureStats.treasure || 0;
         const treasureNeeded = Math.max(0, treasureTarget - currentTreasure);
@@ -776,7 +760,6 @@ class DungeonMapGenerator {
             }
         }
 
-        // Place puzzles if rooms remain
         const puzzleTarget = targetCounts.puzzle || 0;
         const currentPuzzle = this.featureStats.puzzle || 0;
         const puzzleNeeded = Math.max(0, puzzleTarget - currentPuzzle);
@@ -800,7 +783,6 @@ class DungeonMapGenerator {
             }
         }
 
-        // If no objective placed yet, place it
         if (!this.objectivePlaced && this.rooms.size > 5) {
             this.placeObjective();
         }
@@ -815,8 +797,86 @@ class DungeonMapGenerator {
             difficulty: diffConfig,
             backupAttempts: this.backupAttempts,
             newDirectionAttempts: this.newDirectionAttempts,
-            objectivePlaced: this.objectivePlaced
+            objectivePlaced: this.objectivePlaced,
+            totalRooms: this.rooms.size
         };
+    }
+
+    // ============================================
+    // GET DUNGEON STATS FOR DISPLAY
+    // ============================================
+    getDungeonStats() {
+        const diffConfig = this.difficultyConfig[this.difficulty];
+        const totalRooms = this.rooms.size;
+        const nonStartRooms = totalRooms - 1;
+        
+        const stats = {
+            difficulty: diffConfig,
+            totalRooms: totalRooms,
+            nonStartRooms: nonStartRooms,
+            depth: this.depth,
+            featureStats: { ...this.featureStats },
+            objectivePlaced: this.objectivePlaced,
+            objectivePosition: this.objectivePosition,
+            roomTypes: {},
+            percentages: {},
+            directionStats: {
+                newDirections: this.newDirectionAttempts,
+                backupDirections: this.backupAttempts,
+                totalMoves: this.newDirectionAttempts + this.backupAttempts
+            },
+            farthestRoom: null,
+            averageDistance: 0
+        };
+
+        // Calculate room type counts and percentages
+        const typeCounts = {};
+        let totalFeatures = 0;
+        for (const [key, room] of this.rooms) {
+            const type = room.featureType || 'empty';
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
+            if (room.featureType) totalFeatures++;
+        }
+        
+        // Add start room to counts
+        typeCounts.start = 1;
+        stats.roomTypes = typeCounts;
+
+        // Calculate percentages
+        for (const [type, count] of Object.entries(typeCounts)) {
+            stats.percentages[type] = ((count / totalRooms) * 100).toFixed(1);
+        }
+
+        // Find farthest room
+        let maxDist = 0;
+        let farthestKey = null;
+        for (const [key, room] of this.rooms) {
+            const dist = this.roomDistanceCache.get(key) || 0;
+            if (dist > maxDist) {
+                maxDist = dist;
+                farthestKey = key;
+            }
+        }
+        if (farthestKey) {
+            const room = this.rooms.get(farthestKey);
+            stats.farthestRoom = {
+                key: farthestKey,
+                ...room,
+                distance: maxDist
+            };
+        }
+
+        // Calculate average distance
+        let totalDist = 0;
+        let count = 0;
+        for (const [key, room] of this.rooms) {
+            const dist = this.roomDistanceCache.get(key) || 0;
+            totalDist += dist;
+            count++;
+        }
+        stats.averageDistance = count > 0 ? (totalDist / count).toFixed(1) : 0;
+
+        return stats;
     }
 
     // ============================================
@@ -830,7 +890,9 @@ class DungeonMapGenerator {
             puzzle: { icon: '🧩', label: 'PUZZLE' },
             shop: { icon: '🏪', label: 'SHOP' },
             boss: { icon: '👑', label: 'BOSS' },
-            objective: { icon: '⭐', label: 'GOAL' }
+            objective: { icon: '⭐', label: 'GOAL' },
+            start: { icon: '🏠', label: 'START' },
+            empty: { icon: '⬜', label: 'EMPTY' }
         };
         return features[type] || { icon: '⬜', label: '' };
     }
@@ -979,7 +1041,8 @@ class DungeonMapGenerator {
             directionStats: {
                 backupAttempts: this.backupAttempts,
                 newDirectionAttempts: this.newDirectionAttempts
-            }
+            },
+            dungeonStats: this.getDungeonStats()
         };
     }
 }

@@ -846,3 +846,199 @@ header h1 {
         color: #cc9900 !important;
     }
 }
+/* ============================================
+   STATS PANEL
+   ============================================ */
+.stats-panel {
+    background: #0a0a0a;
+    border-radius: 6px;
+    border: 1px solid #2a2a2a;
+    padding: 6px 12px;
+    margin: 2px 0;
+}
+
+.stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 15px;
+    padding: 2px 0;
+    font-size: 0.75em;
+    align-items: center;
+}
+
+.stats-label {
+    color: #d4a843;
+    font-weight: bold;
+    font-size: 0.85em;
+    min-width: 120px;
+}
+
+.stats-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #1a1a1a;
+    padding: 1px 8px;
+    border-radius: 3px;
+    border: 1px solid #2a2a2a;
+}
+
+.stats-item .icon {
+    font-size: 1em;
+}
+
+.stats-item .value {
+    color: #e0d6b0;
+    font-weight: bold;
+}
+
+.stats-item .label {
+    color: #8a8a7a;
+    font-size: 0.85em;
+}
+
+.stats-item .percentage {
+    color: #d4a843;
+    font-size: 0.8em;
+}
+
+/* Difficulty detail */
+.difficulty-detail {
+    color: #8a8a7a;
+    font-size: 0.7em;
+    margin-left: 8px;
+}
+
+/* Gold button for objective */
+.btn-gold {
+    background: #8a6a1a;
+    color: #e0d6b0;
+    border-color: #aa8a2a;
+}
+
+.btn-gold:hover:not(:disabled) {
+    background: #aa8a2a;
+    border-color: #ccaa4a;
+}
+
+/* ============================================
+   OBJECTIVE ROOM
+   ============================================ */
+.cell-room.has-objective {
+    background: #1a2a4a;
+    border-color: #ffd700;
+    animation: pulse-objective 1.5s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+.cell-room.has-objective .icon {
+    font-size: 2.2em;
+}
+
+.cell-room.has-objective .label {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 0.6em;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.cell-room.has-objective::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border-radius: 8px;
+    background: transparent;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    animation: pulse-ring-objective 1.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse-objective {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        border-color: #ffd700;
+    }
+    50% {
+        box-shadow: 0 0 50px rgba(255, 215, 0, 0.6);
+        border-color: #ffed4a;
+    }
+}
+
+@keyframes pulse-ring-objective {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: scale(1.08);
+        opacity: 0.8;
+    }
+}
+
+/* Print styles */
+@media print {
+    .cell-room.has-objective {
+        background: #e6e6ff !important;
+        border-color: #ffd700 !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
+        animation: none !important;
+    }
+    
+    .cell-room.has-objective::before {
+        display: none !important;
+    }
+    
+    .cell-room.has-objective .label {
+        color: #cc9900 !important;
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .stats-row {
+        font-size: 0.65em;
+        gap: 4px 10px;
+    }
+    
+    .stats-label {
+        font-size: 0.75em;
+        min-width: 80px;
+    }
+    
+    .stats-item {
+        padding: 1px 5px;
+    }
+    
+    .btn-gold {
+        padding: 6px 12px;
+        font-size: 0.75em;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row {
+        font-size: 0.55em;
+        gap: 3px 6px;
+        flex-wrap: wrap;
+    }
+    
+    .stats-label {
+        font-size: 0.65em;
+        min-width: 60px;
+    }
+    
+    .stats-item {
+        padding: 1px 4px;
+        font-size: 0.9em;
+    }
+    
+    .btn-gold {
+        padding: 4px 8px;
+        font-size: 0.65em;
+    }
+}
