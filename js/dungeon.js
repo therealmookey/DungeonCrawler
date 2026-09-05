@@ -1,8 +1,8 @@
 /**
- * Dungeon Cartographer - Smart Direction System
- * - 70% chance to prefer new directions
- * - 30% chance to allow backing up
- * - Prevents dead-ends when possible
+ * Dungeon Cartographer - Balanced with Objectives
+ * - Reduced monster count
+ * - Scarce treasure (5-15%)
+ * - Objective tile system
  */
 
 class DungeonMapGenerator {
@@ -13,14 +13,15 @@ class DungeonMapGenerator {
                 color: '#44ff44',
                 maxMonsters: 2,
                 bossCount: 0,
-                treasureMin: 1,
-                treasureMax: 2,
+                treasureMin: 0,
+                treasureMax: 1,
                 trapMin: 0,
                 trapMax: 1,
                 bossMinDistance: 8,
                 shopChance: 0,
-                emptyRoomChance: 50,
-                monsterTreasureChance: 30
+                emptyRoomChance: 60,
+                monsterTreasureChance: 25,
+                objectiveDistance: 5
             },
             2: {
                 name: 'Easy',
@@ -33,12 +34,28 @@ class DungeonMapGenerator {
                 trapMax: 2,
                 bossMinDistance: 7,
                 shopChance: 5,
-                emptyRoomChance: 35,
-                monsterTreasureChance: 40
+                emptyRoomChance: 45,
+                monsterTreasureChance: 30,
+                objectiveDistance: 6
             },
             3: {
                 name: 'Normal',
                 color: '#ffff44',
+                maxMonsters: 3,
+                bossCount: 1,
+                treasureMin: 1,
+                treasureMax: 2,
+                trapMin: 1,
+                trapMax: 2,
+                bossMinDistance: 6,
+                shopChance: 8,
+                emptyRoomChance: 35,
+                monsterTreasureChance: 35,
+                objectiveDistance: 7
+            },
+            4: {
+                name: 'Normal+',
+                color: '#ffaa44',
                 maxMonsters: 4,
                 bossCount: 1,
                 treasureMin: 2,
@@ -46,84 +63,77 @@ class DungeonMapGenerator {
                 trapMin: 2,
                 trapMax: 3,
                 bossMinDistance: 6,
-                shopChance: 10,
-                emptyRoomChance: 25,
-                monsterTreasureChance: 50
+                shopChance: 8,
+                emptyRoomChance: 28,
+                monsterTreasureChance: 40,
+                objectiveDistance: 8
             },
-            4: {
-                name: 'Normal+',
-                color: '#ffaa44',
-                maxMonsters: 5,
+            5: {
+                name: 'Hard',
+                color: '#ff6644',
+                maxMonsters: 4,
                 bossCount: 1,
                 treasureMin: 2,
                 treasureMax: 3,
                 trapMin: 2,
                 trapMax: 3,
-                bossMinDistance: 6,
-                shopChance: 10,
-                emptyRoomChance: 20,
-                monsterTreasureChance: 55
-            },
-            5: {
-                name: 'Hard',
-                color: '#ff6644',
-                maxMonsters: 5,
-                bossCount: 1,
-                treasureMin: 3,
-                treasureMax: 4,
-                trapMin: 3,
-                trapMax: 4,
                 bossMinDistance: 5,
-                shopChance: 8,
-                emptyRoomChance: 15,
-                monsterTreasureChance: 60
+                shopChance: 5,
+                emptyRoomChance: 22,
+                monsterTreasureChance: 40,
+                objectiveDistance: 9
             },
             6: {
                 name: 'Hard+',
                 color: '#ff4444',
-                maxMonsters: 6,
+                maxMonsters: 5,
+                bossCount: 1,
+                treasureMin: 2,
+                treasureMax: 3,
+                trapMin: 3,
+                trapMax: 4,
+                bossMinDistance: 5,
+                shopChance: 5,
+                emptyRoomChance: 18,
+                monsterTreasureChance: 45,
+                objectiveDistance: 10
+            },
+            7: {
+                name: 'Very Hard',
+                color: '#cc2244',
+                maxMonsters: 5,
                 bossCount: 2,
                 treasureMin: 3,
                 treasureMax: 4,
                 trapMin: 3,
                 trapMax: 4,
-                bossMinDistance: 5,
-                shopChance: 8,
-                emptyRoomChance: 12,
-                monsterTreasureChance: 65
-            },
-            7: {
-                name: 'Very Hard',
-                color: '#cc2244',
-                maxMonsters: 6,
-                bossCount: 2,
-                treasureMin: 4,
-                treasureMax: 5,
-                trapMin: 4,
-                trapMax: 5,
                 bossMinDistance: 4,
-                shopChance: 5,
-                emptyRoomChance: 10,
-                monsterTreasureChance: 70
+                shopChance: 3,
+                emptyRoomChance: 15,
+                monsterTreasureChance: 50,
+                objectiveDistance: 11
             },
             8: {
                 name: '💀 Deadly',
                 color: '#ff0044',
-                maxMonsters: 7,
+                maxMonsters: 6,
                 bossCount: 3,
-                treasureMin: 5,
-                treasureMax: 6,
-                trapMin: 5,
-                trapMax: 6,
+                treasureMin: 3,
+                treasureMax: 4,
+                trapMin: 4,
+                trapMax: 5,
                 bossMinDistance: 3,
-                shopChance: 5,
-                emptyRoomChance: 8,
-                monsterTreasureChance: 75
+                shopChance: 3,
+                emptyRoomChance: 12,
+                monsterTreasureChance: 55,
+                objectiveDistance: 12
             }
         };
         
         this.difficulty = 3;
         this.roomDirectionMemory = new Map();
+        this.objectivePlaced = false;
+        this.objectivePosition = null;
         this.reset();
     }
 
@@ -141,6 +151,8 @@ class DungeonMapGenerator {
         this.currentD4 = null;
         this.featuresApplied = [];
         this.roomDirectionMemory = new Map();
+        this.objectivePlaced = false;
+        this.objectivePosition = null;
         this.featureStats = {
             treasure: 0,
             trap: 0,
@@ -148,7 +160,8 @@ class DungeonMapGenerator {
             puzzle: 0,
             shop: 0,
             boss: 0,
-            monsterTreasure: 0
+            monsterTreasure: 0,
+            objective: 0
         };
         this.roomDistanceCache = new Map();
         this.backupAttempts = 0;
@@ -161,6 +174,9 @@ class DungeonMapGenerator {
         this.roomDirectionMemory.set('0,0', new Set());
     }
 
+    // ============================================
+    // DICE FUNCTIONS
+    // ============================================
     rollDice(sides) {
         return Math.floor(Math.random() * sides) + 1;
     }
@@ -175,7 +191,9 @@ class DungeonMapGenerator {
         return directions[d4] || directions[1];
     }
 
-    // Get unexplored directions from current position
+    // ============================================
+    // SMART DIRECTION SYSTEM
+    // ============================================
     getUnexploredDirections() {
         const key = `${this.currentPos.x},${this.currentPos.y}`;
         const used = this.roomDirectionMemory.get(key) || new Set();
@@ -183,7 +201,6 @@ class DungeonMapGenerator {
         return allDirections.filter(d => !used.has(d));
     }
 
-    // Get all directions that lead to empty positions
     getAvailableDirections() {
         const allDirections = [1, 2, 3, 4];
         const available = [];
@@ -198,39 +215,24 @@ class DungeonMapGenerator {
         return available;
     }
 
-    // Check if a position already has a room
-    isPositionFree(x, y) {
-        const key = `${x},${y}`;
-        return !this.rooms.has(key);
-    }
-
-    // SMART DIRECTION SYSTEM
-    // 70% chance to prefer new directions, 30% chance to allow backup
     getSmartDirection() {
         const unexplored = this.getUnexploredDirections();
         const available = this.getAvailableDirections();
         
-        // If no directions available at all, we're stuck - force a random direction
         if (available.length === 0) {
             return this.rollDice(4);
         }
 
-        // If there are unexplored directions available
         if (unexplored.length > 0) {
             // 70% chance to explore new territory
             if (this.rollDice(100) <= 70) {
                 this.newDirectionAttempts++;
-                // Pick random unexplored direction
                 const index = this.rollDice(unexplored.length) - 1;
                 return unexplored[index];
             }
         }
 
-        // 30% chance to backup (or if no unexplored directions)
         this.backupAttempts++;
-        
-        // When backing up, prefer directions that lead to empty spaces
-        // but can also go to existing rooms (creates loops)
         const availableDirections = this.getAvailableDirections();
         const existingDirections = [1, 2, 3, 4].filter(d => {
             const dir = this.getDirection(d);
@@ -240,7 +242,6 @@ class DungeonMapGenerator {
             return this.rooms.has(key) && key !== `${this.currentPos.x},${this.currentPos.y}`;
         });
 
-        // Weight: 60% chance to go to empty space, 40% to go to existing
         if (availableDirections.length > 0 && this.rollDice(100) <= 60) {
             const index = this.rollDice(availableDirections.length) - 1;
             return availableDirections[index];
@@ -252,15 +253,16 @@ class DungeonMapGenerator {
             return availableDirections[index];
         }
 
-        // Fallback - any direction
         return this.rollDice(4);
     }
 
-    // Legacy D4 roll with smart system
     rollForDirection() {
         return this.getSmartDirection();
     }
 
+    // ============================================
+    // DISTANCE CALCULATIONS
+    // ============================================
     calculateDistance(x, y) {
         return Math.abs(x) + Math.abs(y);
     }
@@ -273,16 +275,10 @@ class DungeonMapGenerator {
         }
     }
 
-    isValidBossPosition(key) {
-        const distance = this.roomDistanceCache.get(key) || 0;
-        const diffConfig = this.difficultyConfig[this.difficulty];
-        return distance >= diffConfig.bossMinDistance;
-    }
-
     getDistantRooms(minDistance) {
         const result = [];
         for (const [key, room] of this.rooms) {
-            if (room.type === 'start') continue;
+            if (room.type === 'start' || room.type === 'objective') continue;
             const dist = this.calculateDistance(room.x, room.y);
             if (dist >= minDistance && !room.featureType) {
                 result.push({ key, room, distance: dist });
@@ -291,6 +287,9 @@ class DungeonMapGenerator {
         return result.sort((a, b) => b.distance - a.distance);
     }
 
+    // ============================================
+    // DIFFICULTY & CHARGES
+    // ============================================
     rollForCharges() {
         this.d20Rolls = [];
         let roll = 0;
@@ -335,19 +334,22 @@ class DungeonMapGenerator {
         return this.difficultyConfig[this.difficulty] || this.difficultyConfig[3];
     }
 
+    // ============================================
+    // FEATURE CHECK
+    // ============================================
     checkForFeature(x, y) {
         const diffConfig = this.difficultyConfig[this.difficulty];
         const roll = this.rollDice(20);
         const key = `${x},${y}`;
         const distance = this.calculateDistance(x, y);
         
-        // Empty room check based on difficulty
+        // Empty room check
         if (this.rollDice(100) <= diffConfig.emptyRoomChance) {
             return null;
         }
         
-        // Boss check
-        if (roll === 19 || roll === 20) {
+        // Boss check (very rare)
+        if (roll === 20) {
             if (distance >= diffConfig.bossMinDistance) {
                 const currentBosses = this.featureStats.boss || 0;
                 if (currentBosses < diffConfig.bossCount) {
@@ -360,17 +362,18 @@ class DungeonMapGenerator {
                 }
             }
             // Convert to monster if too close or max reached
+            const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
             return {
                 type: 'monster',
-                icon: '👹',
-                label: 'MONSTER',
+                icon: hasTreasure ? '👹💎' : '👹',
+                label: hasTreasure ? 'MONSTER+' : 'MONSTER',
                 description: 'Monster Lair',
-                hasTreasure: this.rollDice(100) <= diffConfig.monsterTreasureChance
+                hasTreasure: hasTreasure
             };
         }
         
-        // Shop check
-        if (roll === 18) {
+        // Shop check (very rare)
+        if (roll === 18 || roll === 19) {
             if (this.rollDice(100) <= diffConfig.shopChance) {
                 return {
                     type: 'shop',
@@ -388,30 +391,25 @@ class DungeonMapGenerator {
             };
         }
         
-        // Monster check
-        if (roll >= 10 && roll <= 14) {
+        // Monster check (limited)
+        if (roll >= 11 && roll <= 15) {
             const currentMonsters = this.featureStats.monster || 0;
             if (currentMonsters < diffConfig.maxMonsters) {
                 const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
                 return {
                     type: 'monster',
-                    icon: '👹',
-                    label: 'MONSTER',
+                    icon: hasTreasure ? '👹💎' : '👹',
+                    label: hasTreasure ? 'MONSTER+' : 'MONSTER',
                     description: 'Monster Lair',
                     hasTreasure: hasTreasure
                 };
             }
-            // Too many monsters - become empty or treasure
-            return this.rollDice(2) === 1 ? null : {
-                type: 'treasure',
-                icon: '💰',
-                label: 'TREASURE',
-                description: 'Treasure Hoard'
-            };
+            // Too many monsters - become empty
+            return null;
         }
         
-        // Trap check
-        if (roll >= 6 && roll <= 9) {
+        // Trap check (limited)
+        if (roll >= 8 && roll <= 10) {
             const currentTraps = this.featureStats.trap || 0;
             const maxTraps = diffConfig.trapMax;
             if (currentTraps < maxTraps) {
@@ -426,7 +424,7 @@ class DungeonMapGenerator {
         }
         
         // Puzzle check
-        if (roll >= 15 && roll <= 17) {
+        if (roll >= 16 && roll <= 17) {
             return {
                 type: 'puzzle',
                 icon: '🧩',
@@ -435,7 +433,7 @@ class DungeonMapGenerator {
             };
         }
         
-        // Treasure check - limited occurrence
+        // Treasure check (scarce - only on low rolls)
         if (roll >= 2 && roll <= 4) {
             const currentTreasure = this.featureStats.treasure || 0;
             const maxTreasure = diffConfig.treasureMax;
@@ -453,6 +451,9 @@ class DungeonMapGenerator {
         return null;
     }
 
+    // ============================================
+    // PLACE ROOM
+    // ============================================
     placeRoom(direction) {
         if (this.charges <= 0) {
             return { success: false, message: 'No charges remaining!' };
@@ -463,7 +464,7 @@ class DungeonMapGenerator {
         const newY = this.currentPos.y + dir.dy;
         const key = `${newX},${newY}`;
 
-        // Track direction usage from current position
+        // Track direction usage
         const currentKey = `${this.currentPos.x},${this.currentPos.y}`;
         if (!this.roomDirectionMemory.has(currentKey)) {
             this.roomDirectionMemory.set(currentKey, new Set());
@@ -475,12 +476,10 @@ class DungeonMapGenerator {
             this.addHistory('move', { x: newX, y: newY, direction: dir.name });
             this.charges--;
             
-            // Track this direction in the new room too
             const newKey = `${newX},${newY}`;
             if (!this.roomDirectionMemory.has(newKey)) {
                 this.roomDirectionMemory.set(newKey, new Set());
             }
-            // Add opposite direction (since we came from there)
             const oppositeDir = ((direction + 1) % 4) + 1;
             this.roomDirectionMemory.get(newKey).add(oppositeDir);
             
@@ -498,15 +497,12 @@ class DungeonMapGenerator {
         this.addRoom(newX, newY, 'room', '⬜', '');
         const room = this.rooms.get(key);
         
-        // Update distance cache
         this.roomDistanceCache.set(key, this.calculateDistance(newX, newY));
         
-        // Track direction memory for new room
         const newKey = `${newX},${newY}`;
         if (!this.roomDirectionMemory.has(newKey)) {
             this.roomDirectionMemory.set(newKey, new Set());
         }
-        // Add opposite direction (since we came from there)
         const oppositeDir = ((direction + 1) % 4) + 1;
         this.roomDirectionMemory.get(newKey).add(oppositeDir);
         
@@ -527,11 +523,7 @@ class DungeonMapGenerator {
             
             featureMessage = ` 🎯 ${feature.label}`;
             
-            // Track monster treasure separately
             if (feature.type === 'monster' && feature.hasTreasure) {
-                room.icon = '👹💎';
-                room.label = 'MONSTER+';
-                room.hasTreasure = true;
                 this.featureStats.monsterTreasure = (this.featureStats.monsterTreasure || 0) + 1;
                 monsterTreasureMessage = ' 💎 with treasure!';
                 featureMessage += ' 💎';
@@ -567,6 +559,75 @@ class DungeonMapGenerator {
         };
     }
 
+    // ============================================
+    // PLACE OBJECTIVE
+    // ============================================
+    placeObjective() {
+        if (this.objectivePlaced) {
+            return { success: false, message: 'Objective already placed!' };
+        }
+
+        const diffConfig = this.difficultyConfig[this.difficulty];
+        const minDistance = diffConfig.objectiveDistance || 5;
+        
+        // Find farthest room from start that isn't already special
+        let farthestRoom = null;
+        let farthestDist = 0;
+        
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'start' || room.type === 'objective') continue;
+            if (room.featureType) continue;
+            const dist = this.roomDistanceCache.get(key) || 0;
+            if (dist >= minDistance && dist > farthestDist) {
+                farthestDist = dist;
+                farthestRoom = { key, room, distance: dist };
+            }
+        }
+
+        if (!farthestRoom) {
+            // If no room far enough, pick the farthest available
+            for (const [key, room] of this.rooms) {
+                if (room.type === 'start' || room.type === 'objective') continue;
+                const dist = this.roomDistanceCache.get(key) || 0;
+                if (dist > farthestDist) {
+                    farthestDist = dist;
+                    farthestRoom = { key, room, distance: dist };
+                }
+            }
+        }
+
+        if (!farthestRoom) {
+            return { success: false, message: 'No valid room for objective!' };
+        }
+
+        const room = farthestRoom.room;
+        room.icon = '⭐';
+        room.label = 'GOAL';
+        room.type = 'objective';
+        room.color = 'has-objective';
+        room.description = 'Adventurer Goal';
+        room.featureType = 'objective';
+        this.objectivePlaced = true;
+        this.objectivePosition = { x: room.x, y: room.y };
+        this.featureStats.objective = 1;
+        
+        this.addHistory('objective', { 
+            x: room.x, 
+            y: room.y, 
+            distance: farthestDist 
+        });
+
+        return {
+            success: true,
+            message: `⭐ Objective placed ${farthestDist} rooms from start!`,
+            position: { x: room.x, y: room.y },
+            distance: farthestDist
+        };
+    }
+
+    // ============================================
+    // BALANCE DUNGEON
+    // ============================================
     balanceDungeon() {
         const diffConfig = this.difficultyConfig[this.difficulty];
         const totalRooms = this.rooms.size - 1;
@@ -577,21 +638,21 @@ class DungeonMapGenerator {
             };
         }
 
-        // Calculate target counts
+        // Calculate target counts - reduced for better balance
         const targetCounts = {
             treasure: Math.min(
-                Math.floor(totalRooms * 0.15),
+                Math.max(diffConfig.treasureMin, Math.floor(totalRooms * 0.08)),
                 diffConfig.treasureMax
             ),
             trap: Math.min(
-                Math.floor(totalRooms * 0.18),
+                Math.max(diffConfig.trapMin, Math.floor(totalRooms * 0.12)),
                 diffConfig.trapMax
             ),
             monster: Math.min(
-                Math.floor(totalRooms * 0.30),
+                Math.max(1, Math.floor(totalRooms * 0.15)),
                 diffConfig.maxMonsters
             ),
-            puzzle: Math.floor(totalRooms * 0.10),
+            puzzle: Math.floor(totalRooms * 0.06),
             boss: diffConfig.bossCount,
             shop: 0
         };
@@ -599,17 +660,18 @@ class DungeonMapGenerator {
         // Get rooms without features
         const availableRooms = [];
         for (const [key, room] of this.rooms) {
-            if (room.type !== 'start' && !room.featureType) {
+            if (room.type !== 'start' && room.type !== 'objective' && !room.featureType) {
                 const dist = this.roomDistanceCache.get(key) || 0;
                 availableRooms.push({ key, room, distance: dist });
             }
         }
 
-        // Sort by distance from start (farthest first for bosses)
+        // Sort by distance from start
         availableRooms.sort((a, b) => b.distance - a.distance);
 
         let added = 0;
         const addedFeatures = [];
+        const usedKeys = new Set();
         
         // Place bosses in farthest rooms
         const bossTarget = targetCounts.boss || 0;
@@ -617,40 +679,37 @@ class DungeonMapGenerator {
         
         for (let i = 0; i < Math.min(bossTarget, bossCandidates.length); i++) {
             const candidate = bossCandidates[i];
-            const room = this.rooms.get(candidate.key);
-            if (room && !room.featureType) {
-                room.icon = '👑';
-                room.label = 'BOSS';
-                room.featureType = 'boss';
-                room.color = 'has-boss';
-                room.description = 'Boss Chamber';
-                this.featureStats.boss = (this.featureStats.boss || 0) + 1;
-                added++;
-                addedFeatures.push({ 
-                    key: candidate.key, 
-                    type: 'boss',
-                    distance: candidate.distance 
-                });
+            if (!usedKeys.has(candidate.key)) {
+                const room = this.rooms.get(candidate.key);
+                if (room && !room.featureType && room.type !== 'objective') {
+                    room.icon = '👑';
+                    room.label = 'BOSS';
+                    room.featureType = 'boss';
+                    room.color = 'has-boss';
+                    room.description = 'Boss Chamber';
+                    this.featureStats.boss = (this.featureStats.boss || 0) + 1;
+                    added++;
+                    usedKeys.add(candidate.key);
+                    addedFeatures.push({ 
+                        key: candidate.key, 
+                        type: 'boss',
+                        distance: candidate.distance 
+                    });
+                }
             }
         }
-
-        // Place other features
-        const usedKeys = addedFeatures.map(f => f.key);
-        const remainingRooms = availableRooms.filter(r => !usedKeys.includes(r.key));
-        
-        // Shuffle remaining rooms
-        const shuffled = this.shuffleArray(remainingRooms);
-        let index = 0;
 
         // Place monsters (with treasure chance)
         const monsterTarget = targetCounts.monster || 0;
         const currentMonsters = this.featureStats.monster || 0;
         const monsterNeeded = Math.max(0, monsterTarget - currentMonsters);
         
-        for (let i = 0; i < monsterNeeded && index < shuffled.length; i++) {
-            const candidate = shuffled[index++];
+        let monsterPlaced = 0;
+        for (const candidate of availableRooms) {
+            if (monsterPlaced >= monsterNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
             const room = this.rooms.get(candidate.key);
-            if (room && !room.featureType) {
+            if (room && !room.featureType && room.type !== 'objective') {
                 const hasTreasure = this.rollDice(100) <= diffConfig.monsterTreasureChance;
                 room.icon = hasTreasure ? '👹💎' : '👹';
                 room.label = hasTreasure ? 'MONSTER+' : 'MONSTER';
@@ -663,7 +722,9 @@ class DungeonMapGenerator {
                     this.featureStats.monsterTreasure = (this.featureStats.monsterTreasure || 0) + 1;
                 }
                 added++;
+                usedKeys.add(candidate.key);
                 addedFeatures.push({ key: candidate.key, type: 'monster', hasTreasure });
+                monsterPlaced++;
             }
         }
 
@@ -672,10 +733,12 @@ class DungeonMapGenerator {
         const currentTraps = this.featureStats.trap || 0;
         const trapNeeded = Math.max(0, trapTarget - currentTraps);
         
-        for (let i = 0; i < trapNeeded && index < shuffled.length; i++) {
-            const candidate = shuffled[index++];
+        let trapPlaced = 0;
+        for (const candidate of availableRooms) {
+            if (trapPlaced >= trapNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
             const room = this.rooms.get(candidate.key);
-            if (room && !room.featureType) {
+            if (room && !room.featureType && room.type !== 'objective') {
                 room.icon = '⚠️';
                 room.label = 'TRAP';
                 room.featureType = 'trap';
@@ -683,19 +746,23 @@ class DungeonMapGenerator {
                 room.description = 'Dangerous Trap';
                 this.featureStats.trap = (this.featureStats.trap || 0) + 1;
                 added++;
+                usedKeys.add(candidate.key);
                 addedFeatures.push({ key: candidate.key, type: 'trap' });
+                trapPlaced++;
             }
         }
 
-        // Place treasures
+        // Place treasures (scarce)
         const treasureTarget = targetCounts.treasure || 0;
         const currentTreasure = this.featureStats.treasure || 0;
         const treasureNeeded = Math.max(0, treasureTarget - currentTreasure);
         
-        for (let i = 0; i < treasureNeeded && index < shuffled.length; i++) {
-            const candidate = shuffled[index++];
+        let treasurePlaced = 0;
+        for (const candidate of availableRooms) {
+            if (treasurePlaced >= treasureNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
             const room = this.rooms.get(candidate.key);
-            if (room && !room.featureType) {
+            if (room && !room.featureType && room.type !== 'objective') {
                 room.icon = '💰';
                 room.label = 'TREASURE';
                 room.featureType = 'treasure';
@@ -703,7 +770,9 @@ class DungeonMapGenerator {
                 room.description = 'Treasure Hoard';
                 this.featureStats.treasure = (this.featureStats.treasure || 0) + 1;
                 added++;
+                usedKeys.add(candidate.key);
                 addedFeatures.push({ key: candidate.key, type: 'treasure' });
+                treasurePlaced++;
             }
         }
 
@@ -712,10 +781,12 @@ class DungeonMapGenerator {
         const currentPuzzle = this.featureStats.puzzle || 0;
         const puzzleNeeded = Math.max(0, puzzleTarget - currentPuzzle);
         
-        for (let i = 0; i < puzzleNeeded && index < shuffled.length; i++) {
-            const candidate = shuffled[index++];
+        let puzzlePlaced = 0;
+        for (const candidate of availableRooms) {
+            if (puzzlePlaced >= puzzleNeeded) break;
+            if (usedKeys.has(candidate.key)) continue;
             const room = this.rooms.get(candidate.key);
-            if (room && !room.featureType) {
+            if (room && !room.featureType && room.type !== 'objective') {
                 room.icon = '🧩';
                 room.label = 'PUZZLE';
                 room.featureType = 'puzzle';
@@ -723,8 +794,15 @@ class DungeonMapGenerator {
                 room.description = 'Puzzle Room';
                 this.featureStats.puzzle = (this.featureStats.puzzle || 0) + 1;
                 added++;
+                usedKeys.add(candidate.key);
                 addedFeatures.push({ key: candidate.key, type: 'puzzle' });
+                puzzlePlaced++;
             }
+        }
+
+        // If no objective placed yet, place it
+        if (!this.objectivePlaced && this.rooms.size > 5) {
+            this.placeObjective();
         }
 
         return {
@@ -736,10 +814,14 @@ class DungeonMapGenerator {
             targets: targetCounts,
             difficulty: diffConfig,
             backupAttempts: this.backupAttempts,
-            newDirectionAttempts: this.newDirectionAttempts
+            newDirectionAttempts: this.newDirectionAttempts,
+            objectivePlaced: this.objectivePlaced
         };
     }
 
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
     getFeatureData(type) {
         const features = {
             treasure: { icon: '💰', label: 'TREASURE' },
@@ -747,7 +829,8 @@ class DungeonMapGenerator {
             monster: { icon: '👹', label: 'MONSTER' },
             puzzle: { icon: '🧩', label: 'PUZZLE' },
             shop: { icon: '🏪', label: 'SHOP' },
-            boss: { icon: '👑', label: 'BOSS' }
+            boss: { icon: '👑', label: 'BOSS' },
+            objective: { icon: '⭐', label: 'GOAL' }
         };
         return features[type] || { icon: '⬜', label: '' };
     }
@@ -795,7 +878,7 @@ class DungeonMapGenerator {
         if (lastAction.action === 'place') {
             const key = `${lastAction.data.x},${lastAction.data.y}`;
             const room = this.rooms.get(key);
-            if (room && room.type !== 'start') {
+            if (room && room.type !== 'start' && room.type !== 'objective') {
                 if (room.featureType) {
                     this.featureStats[room.featureType] = Math.max(0, (this.featureStats[room.featureType] || 1) - 1);
                     if (room.hasTreasure) {
@@ -836,9 +919,21 @@ class DungeonMapGenerator {
         return { success: false, message: 'Could not undo this action' };
     }
 
+    // ============================================
+    // GETTERS
+    // ============================================
     getStartRoom() {
         for (const [key, room] of this.rooms) {
             if (room.type === 'start') {
+                return { key, ...room };
+            }
+        }
+        return null;
+    }
+
+    getObjectiveRoom() {
+        for (const [key, room] of this.rooms) {
+            if (room.type === 'objective') {
                 return { key, ...room };
             }
         }
@@ -857,6 +952,10 @@ class DungeonMapGenerator {
         return this.roomDistanceCache.get(key) || 0;
     }
 
+    isObjectivePlaced() {
+        return this.objectivePlaced;
+    }
+
     exportMapData() {
         return {
             rooms: Array.from(this.rooms.entries()).map(([key, room]) => ({ 
@@ -873,8 +972,10 @@ class DungeonMapGenerator {
             difficulty: this.difficultyConfig[this.difficulty],
             currentPos: this.currentPos,
             startRoom: this.getStartRoom(),
+            objectiveRoom: this.getObjectiveRoom(),
             features: this.featuresApplied,
             featureStats: this.featureStats,
+            objectivePlaced: this.objectivePlaced,
             directionStats: {
                 backupAttempts: this.backupAttempts,
                 newDirectionAttempts: this.newDirectionAttempts
